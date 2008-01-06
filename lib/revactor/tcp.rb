@@ -187,27 +187,22 @@ module Revactor
       #
 
       def on_connect
-        puts "on_connect"
         @controller << [:tcp_connected, self]
       end
 
       def on_connect_failed
-        puts "on_connect_failed"
         @controller << [:tcp_connect_failed, self]
       end
 
       def on_resolve_failed
-        puts "on_resolve_failed"
         @controller << [:tcp_resolve_failed, self]
       end
 
       def on_close
-        puts "on_close"
         @controller << [:tcp_closed, self]
       end
 
       def on_read(data)
-        puts "on_read"
         @controller << [:tcp, self, data]
         
         if @active == :once
@@ -217,7 +212,6 @@ module Revactor
       end
 
       def on_write_complete
-        puts "on_write_complete"
         @controller << [:tcp_write_complete, self]
       end
     end
@@ -281,8 +275,6 @@ module Revactor
       #
       
       def on_connection(socket)
-        puts "on_connection"
-        
         sock = Socket.new(socket, :controller => @controller)
         sock.attach(Rev::Loop.default)
         

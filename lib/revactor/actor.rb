@@ -36,7 +36,7 @@ class Actor < Fiber
     # Create a new Actor with the given block and arguments
     def new(*args, &block)
       raise ArgumentError, "no block given" unless block
-      actor = super do 
+      actor = super() do 
         block.call(*args)
         Actor.current.instance_eval { @dead = true }
       end
