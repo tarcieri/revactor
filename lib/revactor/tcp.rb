@@ -51,7 +51,7 @@ module Revactor
     #   :controller - The controlling actor, default Actor.current
     #
     def self.listen(addr, port, options = {})
-      Listener.new(addr, port, options).attach(Rev::Loop.default)
+      Listener.new(addr, port, options).attach(Rev::Loop.default).disable
     end
 
     # TCP socket class, returned by Revactor::TCP.connect and 
@@ -223,8 +223,8 @@ module Revactor
    
       # Listen on the specified address and port.  Accepts the following options:
       #
-      #   :active - Controls how connections are accepted from the socket.  
-      #             See the documentation for #active=
+      #   :active - Default active setting for new connections.  See the 
+      #             documentation Rev::TCP::Socket#active= for more info
       #
       #   :controller - The controlling actor, default Actor.current
       #   
@@ -243,7 +243,6 @@ module Revactor
           raise ArgumentError, "must be true, false, or :once" 
         end
       
-        enable if [true, :once].include?(state) and disabled?
         @active = state
       end
       
@@ -255,12 +254,10 @@ module Revactor
       
       # Accept an incoming connection
       def accept
-        was_enabled = enabled?
-        enable unless enabled?
+        enable
         
         Actor.receive do |filter|
           filter.when(proc { |m| m[0] == :tcp_connection and m[1] == self }) do |message|
-            disable unless was_enabled
             return message[2]
           end
         end
@@ -275,14 +272,11 @@ module Revactor
       #
       
       def on_connection(socket)
-        sock = Socket.new(socket, :controller => @controller)
+        sock = Socket.new(socket, :controller => @controller, :active => @active)
         sock.attach(Rev::Loop.default)
         
         @controller << [:tcp_connection, self, sock]
-        if @active == :once
-          @active = false
-          disable
-        end
+        disable
       end
     end
   end
