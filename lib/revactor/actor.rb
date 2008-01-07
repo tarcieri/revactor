@@ -25,9 +25,11 @@ class ActorError < StandardError; end
 # actor dictionary (used for networking functionality).  Hopefully these 
 # additional features will not get in the way of Rubinius / Rev compatibility.
 #
-class Actor < Fiber  
-  # Actor::ANY can be used in a filter match any message
-  ANY = Object unless defined? Actor::ANY
+class Actor < Fiber
+  include Enumerable
+    
+  # Actor::ANY_MESSAGE can be used in a filter match any message
+  ANY_MESSAGE = Object unless defined? Actor::ANY_MESSAGE
   @@registered = {}
 
   class << self
@@ -38,13 +40,14 @@ class Actor < Fiber
       raise ArgumentError, "no block given" unless block
       actor = super() do 
         block.call(*args)
-        Actor.current.instance_eval { @dead = true }
+        Actor.current.instance_eval { @_dead = true }
       end
 
       # For whatever reason #initialize is never called in subclasses of Fiber
       actor.instance_eval do 
-        @dead = false
-        @mailbox = Mailbox.new
+        @_dead = false
+        @_mailbox = Mailbox.new
+        @_dictionary = {}
       end
 
       Scheduler << actor
@@ -77,7 +80,12 @@ class Actor < Fiber
         raise ActorError, "receive must be called in the context of an Actor"
       end
 
-      current.instance_eval { @mailbox.receive(&filter) }
+      current.instance_eval { @_mailbox.receive(&filter) }
+    end
+
+    # Look up an actor in the global dictionary
+    def [](key)
+      @@registered[key]
     end
 
     # Register this actor in the global dictionary
@@ -87,11 +95,6 @@ class Actor < Fiber
       end
 
       @@registered[key] = actor
-    end
-
-    # Look up an actor in the global dictionary
-    def [](key)
-      @@registered[key]
     end
 
     # Delete an actor from the global dictionary
@@ -105,8 +108,28 @@ class Actor < Fiber
     end
   end
   
+  # Look up value in the actor's dictionary
+  def [](key)
+    @_dictionary[key]
+  end
+  
+  # Store a value in the actor's dictionary
+  def []=(key, value)
+    @_dictionary[key] = value
+  end
+  
+  # Delete a value from the actor's dictionary
+  def delete(key, &block)
+    @_dictionary.delete(key, &block)
+  end
+  
+  # Iterate over values in the actor's dictionary
+  def each(&block)
+    @_dictionary.each(&block)
+  end
+  
   # Is the current actor dead?
-  def dead?; @dead; end
+  def dead?; @_dead; end
   
   # Send a message to an actor
   def <<(message)
@@ -114,7 +137,7 @@ class Actor < Fiber
     # it must be the right thing to do, right?
     return message if dead?
     
-    @mailbox << message
+    @_mailbox << message
     Scheduler << self
     message
   end
@@ -147,7 +170,7 @@ class Actor < Fiber
             end
           end
           
-          @@queue.clear
+          @@queue.clear         
           Rev::Loop.default.run_once unless Rev::Loop.default.watchers.empty?
         end
         
