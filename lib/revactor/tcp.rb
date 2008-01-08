@@ -178,6 +178,8 @@ module Revactor
         end
       end
       
+      alias_method :<<, :write
+      
       #########
       protected
       #########
