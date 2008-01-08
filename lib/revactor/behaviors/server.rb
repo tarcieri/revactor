@@ -1,3 +1,9 @@
+#--
+# Copyright (C)2007 Tony Arcieri
+# You can redistribute this under the terms of the Ruby license
+# See file LICENSE for details
+#++
+
 module Revactor
   module Behavior
     # The Server behavior provides a callback-driven class which eases the

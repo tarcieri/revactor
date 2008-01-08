@@ -80,7 +80,7 @@ class Actor < Fiber
         raise ActorError, "receive must be called in the context of an Actor"
       end
 
-      current.instance_eval { @_mailbox.receive(&filter) }
+      current.__send__(:_mailbox).receive(&filter)
     end
 
     # Look up an actor in the global dictionary
@@ -143,7 +143,13 @@ class Actor < Fiber
   end
 
   alias_method :send, :<<
-
+  
+  #########
+  protected
+  #########
+  
+  attr_reader :_mailbox
+  
   # Actor scheduler class, maintains a run queue of actors with outstanding
   # messages who have not yet processed their mailbox.  If all actors have
   # processed their mailboxes then the scheduler waits for any outstanding
@@ -183,39 +189,54 @@ class Actor < Fiber
   # suspending and resuming an actor when no messages match its filter set.
   class Mailbox
     attr_accessor :timer
+    attr_accessor :timed_out
+    attr_accessor :timeout_action
 
     def initialize
       @timer = nil
       @queue = []
     end
 
+    # Add a message to the mailbox queue
     def <<(message)
       @queue << message
     end
 
+    # Attempt to receive a message
     def receive
       raise ArgumentError, "no filter block given" unless block_given?
 
+      # Clear mailbox processing variables
+      action = matched_index = matched_message = nil
+      processed_upto = 0
+      
+      # Clear timeout variables
+      @timed_out = false
+      @timeout_action = nil
+      
+      # Build the filter
       filter = Filter.new(self)
       yield filter
       raise ArgumentError, "empty filter" if filter.empty?
 
-      matched_index = matched_message = action = nil
-      last_index = 0
-
+      # Process incoming messages
       while action.nil?
-        @queue[last_index..@queue.size].each_with_index do |message, index|
+        @queue[processed_upto..@queue.size].each_with_index do |message, index|
+          processed_upto += 1
           next unless (action = filter.match message)
+          
+          # We've found a matching action, so break out of the loop
           matched_index = index
           matched_message = message
 
           break
         end
 
-        unless action
-          last_index = @queue.size
-          Actor.yield
-        end
+        # If we've timed out, run the timeout action unless another has been found
+        action ||= @timeout_action if @timed_out
+
+        # If we didn't find a matching action, yield until we get another message
+        Actor.yield unless action
       end
 
       if @timer
@@ -223,6 +244,10 @@ class Actor < Fiber
         @timer = nil
       end
       
+      # If we encountered a timeout, call the action directly
+      return action.call if @timed_out
+      
+      # Otherwise we matched a message, so process it with the action
       @queue.delete_at matched_index
       return action.(matched_message)
     end
@@ -235,8 +260,8 @@ class Actor < Fiber
       end
 
       def on_timer
-        @actor << :timeout
-        detach
+        @actor.instance_eval { @_mailbox.timed_out = true }
+        Scheduler << @actor
       end
     end
  
@@ -255,9 +280,17 @@ class Actor < Fiber
 
       def after(timeout, &action)
         raise ArgumentError, "timeout already specified" if @mailbox.timer
-        @mailbox.timer = Timer.new(timeout, Actor.current)
-        @mailbox.timer.attach(Rev::Loop.default)
-        @ruleset << [:timeout, action]
+        raise ArgumentError, "must be zero or positive" if timeout < 0
+        @mailbox.timeout_action = action
+        
+        if timeout > 0
+          @mailbox.timer = Timer.new(timeout, Actor.current).attach(Rev::Loop.default)
+        else
+          # No need to actually set a timer if the timeout is zero, 
+          # just short-circuit waiting for one entirely...
+          @timed_out = true
+          Scheduler << self
+        end
       end
 
       def match(message)

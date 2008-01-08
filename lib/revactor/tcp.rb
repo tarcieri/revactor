@@ -236,6 +236,7 @@ module Revactor
         }.merge(options)
         
         @active, @controller = opts[:active], opts[:controller]
+        @accepting = false
       end
       
       def active=(state)
@@ -254,10 +255,14 @@ module Revactor
       
       # Accept an incoming connection
       def accept
+        raise "another actor is already accepting" if @accepting
+        
+        @accepting = true
         enable
         
         Actor.receive do |filter|
           filter.when(proc { |m| m[0] == :tcp_connection and m[1] == self }) do |message|
+            @accepting = false
             return message[2]
           end
         end
