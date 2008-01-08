@@ -76,9 +76,9 @@ describe Revactor::TCP do
       s2.read(6).should == 'foobar'
       
       s1.close
-      @actor_Run = true
+      @actor_run = true
     end
     
-    @actor_Run.should be_true  
+    @actor_run.should be_true  
   end
 end
