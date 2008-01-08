@@ -64,7 +64,7 @@ module Revactor
           @buffer << data
 
           # Don't do anything until we receive the specified amount of data
-          return unless @buffer.size >= @prefix.payload_length
+          return received unless @buffer.size >= @prefix.payload_length
 
           # Extract the specified amount of data and process it
           received << @buffer.slice!(0, @prefix.payload_length)
