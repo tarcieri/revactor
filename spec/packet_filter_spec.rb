@@ -99,16 +99,17 @@ describe Revactor::Filters::Packet do
     packet3 = [msg3.length].pack('n') << msg3
         
     chunks = []
-    chunks[0] = packet1[0..0]
-    chunks[1] = packet1[1..(packet1.size - 1)] << packet2[0..0]
-    chunks[2] = packet2[1..(packet2.size - 2)]
-    chunks[3] = packet2[(packet2.size - 1)..(packet2.size - 1)] << packet3
+    chunks[0] = packet1.slice(0, 1)
+    chunks[1] = packet1.slice(1, packet1.size) << packet2.slice(0, 1)
+    chunks[2] = packet2.slice(1, packet2.size - 1)
+    chunks[3] = packet2.slice(packet2.size, 1) << packet3
     
     chunks.reduce([]) { |a, chunk| a + filter.decode(chunk) }.should == [msg1, msg2, msg3]
   end
 
   it "raises an exception for overlength frames" do
+    filter = Revactor::Filters::Packet.new(2)
     payload = 'X' * 65537
-    proc { @filter.encode payload }.should raise_error
+    proc { filter.encode payload }.should raise_error(ArgumentError)
   end
 end

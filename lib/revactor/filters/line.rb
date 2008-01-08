@@ -6,7 +6,6 @@
 
 module Revactor
   module Filters
-    
     class Line
       MAX_LENGTH = 1048576 # Maximum length of a single line
       
@@ -24,7 +23,7 @@ module Revactor
         end
         
         @input << lines.shift
-        return if lines.empty?
+        return [] if lines.empty?
         
         lines.unshift @input
         @input = lines.pop
@@ -32,8 +31,8 @@ module Revactor
         lines.map(&:chomp)
       end
       
-      def encode(data)
-        [data, @delimiter]
+      def encode(*data)
+        data.reduce('') { |s, d| s << d << @delimiter }
       end
     end
   end
