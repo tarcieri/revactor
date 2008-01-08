@@ -4,7 +4,7 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../lib/revactor/filters/packet.rb'
+require File.dirname(__FILE__) + '/../lib/revactor/filters/packet'
 
 describe Revactor::Filters::Packet do
   describe 'Prefix' do

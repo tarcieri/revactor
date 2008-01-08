@@ -4,7 +4,7 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../lib/revactor/filters/line.rb'
+require File.dirname(__FILE__) + '/../lib/revactor/filters/line'
 
 describe Revactor::Filters::Line do
   before(:each) do

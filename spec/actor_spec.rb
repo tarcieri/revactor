@@ -48,23 +48,25 @@ describe Actor do
   end
   
   describe "receive" do
+    before :each do
+      @actor_run = false
+    end
+    
     it "returns the value of the matching filter action" do
-      actor_run = false
       actor = Actor.new do
         Actor.receive do |filter|
           filter.when(:foo) { |message| :bar }
         end.should == :bar
         
         # Make sure the spec actually ran the actor
-        actor_run = true
+        @actor_run = true
       end
       
       actor << :foo
-      actor_run.should be_true
+      @actor_run.should be_true
     end
     
     it "filters messages with ===" do
-      actor_run = false
       actor = Actor.new do
         results = []
         3.times do
@@ -75,15 +77,14 @@ describe Actor do
           end
         end
         results.should == ['first message', 'second message', 'third message']
-        actor_run = true
+        @actor_run = true
       end
       
       ['first message', 'second message', 'third message'].each { |m| actor << m }
-      actor_run.should be_true
+      @actor_run.should be_true
     end
     
     it "filters messages by Proc" do
-      actor_run = false
       actor = Actor.new do
         results = []
         3.times do
@@ -94,7 +95,7 @@ describe Actor do
           end
         end
         results.should == ['first message', 'second message', 'third message']
-        actor_run = true
+        @actor_run = true
       end
       
       [
@@ -102,23 +103,21 @@ describe Actor do
         ['second message', :second], 
         ['third message',  :third]
       ].each { |m| actor << m }
-      actor_run.should be_true
+      @actor_run.should be_true
     end
     
     it "times out if a message isn't received after the specifed interval" do
-      actor_run = false
       actor = Actor.new do
         Actor.receive do |filter|
           filter.when(:foo) { :wrong }
           filter.after(0.01) { :right }
         end.should == :right
-        actor_run = true
+        @actor_run = true
       end
-      actor_run.should be_true
+      @actor_run.should be_true
     end
     
     it "matches any message with Actor::ANY_MESSAGE" do
-      actor_run = false
       actor = Actor.new do
         result = []
         3.times do
@@ -128,11 +127,11 @@ describe Actor do
         end
         
         result.should == [:foo, :bar, :baz]
-        actor_run = true
+        @actor_run = true
       end
       
       [:foo, :bar, :baz].each { |m| actor << m }
-      actor_run.should be_true
+      @actor_run.should be_true
     end
   end
   
