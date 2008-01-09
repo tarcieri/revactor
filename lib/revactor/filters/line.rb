@@ -32,7 +32,7 @@ module Revactor
       end
       
       def encode(*data)
-        data.reduce('') { |s, d| s << d << @delimiter }
+        data.join(@delimiter) << @delimiter
       end
     end
   end

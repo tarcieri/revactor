@@ -67,7 +67,10 @@ module Revactor
           return received unless @buffer.size >= @prefix.payload_length
 
           # Extract the specified amount of data and process it
-          received << @buffer.slice!(0, @prefix.payload_length)
+          # Too bad slice! is slow :(
+          # received << @buffer.slice!(0, @prefix.payload_length)
+          received << @buffer[0..(@prefix.payload_length - 1)]
+          @buffer = @buffer[@prefix.payload_length..@buffer.size]
 
           # Reset the prefix and buffer since we've received a whole frame
           @prefix.reset!

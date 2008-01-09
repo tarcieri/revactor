@@ -128,7 +128,13 @@ module Revactor
             return data
           end
           
-          return @read_buffer.slice!(0, length) if @read_buffer.size >= length
+          # Slow in Ruby 1.9 :(
+          # return @read_buffer.slice!(0, length) if @read_buffer.size >= length
+          if @read_buffer.size >= length
+            data = @read_buffer[0..(length - 1)]
+            @read_buffer = @read_buffer[length..@read_buffer.size]
+            return data
+          end
         end
               
         was_enabled = enabled?
@@ -150,7 +156,12 @@ module Revactor
                 
                 if @read_buffer.size >= length
                   disable unless was_enabled
-                  return @read_buffer.slice!(0, length) 
+                  
+                  # Slow in Ruby 1.9 :(
+                  # return @read_buffer.slice!(0, length) 
+                  data = @read_buffer[0..(length - 1)]
+                  @read_buffer = @read_buffer[length..@read_buffer.size]
+                  return data
                 end
               when :tcp_closed
                 raise EOFError, "connection closed"
