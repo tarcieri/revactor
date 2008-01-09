@@ -69,9 +69,9 @@ module Revactor
         #
         #   :controller - The controlling actor, default Actor.current
         #
-        #   :filter - An object or array of objects which implement encode and
-        #             decode methods to transform data sent and received via
-        #             Revactor::TCP::Socket.
+        #   :filter - An symbol/class or array of symbols/classes which implement 
+        #             #encode and #decode methods to transform data sent and 
+        #             received data respectively via Revactor::TCP::Socket.
         #
         def connect(host, port, options = {})
           options[:active]     ||= false
