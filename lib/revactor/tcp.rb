@@ -60,22 +60,28 @@ module Revactor
       attr_reader :active
       attr_reader :controller
 
-      # Connect to the specified host and port.  Host may be a domain name
-      # or IP address.  Accepts the following options:
-      #
-      #   :active - Controls how data is read from the socket.  See the
-      #             documentation for #active=
-      #
-      #   :controller - The controlling actor, default Actor.current
-      #
-      def self.connect(host, port, options = {})
-        options[:active]     ||= false
-        options[:controller] ||= Actor.current
+      class << self
+        # Connect to the specified host and port.  Host may be a domain name
+        # or IP address.  Accepts the following options:
+        #
+        #   :active - Controls how data is read from the socket.  See the
+        #             documentation for #active=
+        #
+        #   :controller - The controlling actor, default Actor.current
+        #
+        #   :filter - An object or array of objects which implement encode and
+        #             decode methods to transform data sent and received via
+        #             Revactor::TCP::Socket.
+        #
+        def connect(host, port, options = {})
+          options[:active]     ||= false
+          options[:controller] ||= Actor.current
         
-        super(host, port).instance_eval {
-          @active, @controller = options[:active], options[:controller]
-          self
-        }
+          super(host, port, options).instance_eval {
+            @active, @controller = options[:active], options[:controller]            
+            self
+          }
+        end
       end
       
       def initialize(socket, options = {})        
@@ -83,6 +89,7 @@ module Revactor
         
         @active ||= options[:active] || false
         @controller ||= options[:controller] || Actor.current
+        @filter = initialize_filter(options[:filter])
         @read_buffer = ''
       end
       
@@ -196,6 +203,57 @@ module Revactor
       #########
       
       #
+      # Filter setup
+      #
+      
+      def initialize_filter(filter)
+        return [] unless filter
+        
+        filter.map do |f|
+          case filter
+          when Array
+            name = f.shift
+            case name
+            when Class
+              name.new(*f)
+            when Symbol
+              symbol_to_filter(name).new(*f)
+            else raise ArgumentError, "unrecognized filter type: #{name.class}"
+            end
+          when Class
+            f.new
+          when Symbol
+            symbol_to_filter(f).new
+          end
+        end
+      end
+      
+      def symbol_to_filter(filter)
+        case filter
+        when :line then Revactor::Filters::Line
+        when :packet then Revactor::Filters::Packet
+        else raise ArgumentError, "unrecognized filter type: #{filter}"
+        end
+      end
+      
+      def decode(message)
+        return message if @filter.empty?
+        
+        @filter.each do |f|
+          case message
+          when Array
+            message = message.reduce([]) { |a, m| a + f.decode(message) }
+          else
+            message = f.decode(message)
+          end
+          
+          return [] if message.nil? or message.empty?
+        end
+        
+        message
+      end
+      
+      #
       # Rev::TCPSocket callbacks
       #
 
@@ -216,8 +274,16 @@ module Revactor
       end
 
       def on_read(data)
-        @controller << [:tcp, self, data]
+        # Run incoming message through the filter chain
+        message = decode(data)
         
+        if message.is_a?(Array) and not message.empty?
+          message.each { |msg| @controller << [:tcp, self, msg] }
+        elsif message
+          @controller << [:tcp, self, message]
+        else return
+        end
+          
         if @active == :once
           @active = false
           disable
