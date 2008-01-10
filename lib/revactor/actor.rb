@@ -134,7 +134,9 @@ class Actor < Fiber
   # Send a message to an actor
   def <<(message)
     # Erlang discards messages sent to dead actors, and if Erlang does it,
-    # it must be the right thing to do, right?
+    # it must be the right thing to do, right?  Hooray for the Erlang 
+    # cargo cult!  I think they do this because dealing with errors raised
+    # from dead actors complicates overall error handling too much to be worth it.
     return message if dead?
     
     @_mailbox << message
