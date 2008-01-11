@@ -21,17 +21,17 @@ module Revactor
     class << self
       # Construct a call message
       def call_message(message, from = Actor.current)
-        [:call, from, message]
+        T[:call, from, message]
       end
       
       # Construct a call reply message
       def call_reply_message(message, actor = Actor.current)
-        [:call_reply, from, message]
+        T[:call_reply, from, message]
       end
       
       # Construct a call error message
       def call_error_message(message, from = Actor.current)
-        [:call_error, from, message]
+        T[:call_error, from, message]
       end
     end
     

@@ -258,19 +258,19 @@ module Revactor
       #
 
       def on_connect
-        @controller << [:tcp_connected, self]
+        @controller << T[:tcp_connected, self]
       end
 
       def on_connect_failed
-        @controller << [:tcp_connect_failed, self]
+        @controller << T[:tcp_connect_failed, self]
       end
 
       def on_resolve_failed
-        @controller << [:tcp_resolve_failed, self]
+        @controller << T[:tcp_resolve_failed, self]
       end
 
       def on_close
-        @controller << [:tcp_closed, self]
+        @controller << T[:tcp_closed, self]
       end
 
       def on_read(data)
@@ -278,9 +278,9 @@ module Revactor
         message = decode(data)
         
         if message.is_a?(Array) and not message.empty?
-          message.each { |msg| @controller << [:tcp, self, msg] }
+          message.each { |msg| @controller << T[:tcp, self, msg] }
         elsif message
-          @controller << [:tcp, self, message]
+          @controller << T[:tcp, self, message]
         else return
         end
           
@@ -291,7 +291,7 @@ module Revactor
       end
 
       def on_write_complete
-        @controller << [:tcp_write_complete, self]
+        @controller << T[:tcp_write_complete, self]
       end
     end
 
@@ -359,7 +359,7 @@ module Revactor
         sock = Socket.new(socket, :controller => @controller, :active => @active)
         sock.attach(Rev::Loop.default)
         
-        @controller << [:tcp_connection, self, sock]
+        @controller << T[:tcp_connection, self, sock]
         disable
       end
     end
