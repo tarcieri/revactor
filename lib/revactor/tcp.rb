@@ -78,7 +78,8 @@ module Revactor
           options[:controller] ||= Actor.current
         
           super(host, port, options).instance_eval {
-            @active, @controller = options[:active], options[:controller]            
+            @active, @controller = options[:active], options[:controller]
+            @filterset = initialize_filter(*options[:filter])
             self
           }
         end
@@ -89,7 +90,8 @@ module Revactor
         
         @active ||= options[:active] || false
         @controller ||= options[:controller] || Actor.current
-        @filter = initialize_filter(options[:filter])
+        @filterset ||= initialize_filter(*options[:filter])
+        
         @read_buffer = ''
       end
       
@@ -206,24 +208,24 @@ module Revactor
       # Filter setup
       #
       
-      def initialize_filter(filter)
-        return [] unless filter
+      def initialize_filter(*filterset)
+        return [] if filterset.empty?
         
-        filter.map do |f|
+        filterset.map do |filter|
           case filter
           when Array
-            name = f.shift
+            name = filter.shift
             case name
             when Class
-              name.new(*f)
+              name.new(*filter)
             when Symbol
-              symbol_to_filter(name).new(*f)
+              symbol_to_filter(name).new(*filter)
             else raise ArgumentError, "unrecognized filter type: #{name.class}"
             end
           when Class
-            f.new
+            filter.new
           when Symbol
-            symbol_to_filter(f).new
+            symbol_to_filter(filter).new
           end
         end
       end
@@ -236,21 +238,12 @@ module Revactor
         end
       end
       
-      def decode(message)
-        return message if @filter.empty?
-        
-        @filter.each do |f|
-          case message
-          when Array
-            message = message.reduce([]) { |a, m| a + f.decode(message) }
-          else
-            message = f.decode(message)
+      def decode(data)
+        @filterset.reduce([data]) do |a, filter|
+          a.reduce([]) do |a2, d|
+            a2 + filter.decode(d)
           end
-          
-          return [] if message.nil? or message.empty?
         end
-        
-        message
       end
       
       #
@@ -315,6 +308,11 @@ module Revactor
         }.merge(options)
         
         @active, @controller = opts[:active], opts[:controller]
+        
+        # Verify the filter initialize
+        initialize_filter(*options[:filter])
+        @filterset = options[:filter]
+        
         @accepting = false
       end
       
@@ -356,7 +354,11 @@ module Revactor
       #
       
       def on_connection(socket)
-        sock = Socket.new(socket, :controller => @controller, :active => @active)
+        sock = Socket.new(socket, 
+          :controller => @controller, 
+          :active => @active,
+          :filter => @filterset
+        )
         sock.attach(Rev::Loop.default)
         
         @controller << T[:tcp_connection, self, sock]

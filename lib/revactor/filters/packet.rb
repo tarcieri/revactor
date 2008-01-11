@@ -27,7 +27,7 @@ module Revactor
       def decode(data)
         received = []
         @buffer << data
-        
+      
         begin  
           if @mode == :prefix
             break if @buffer.size < @prefix_size
@@ -35,7 +35,7 @@ module Revactor
             @data_size = prefix.unpack(@prefix_size == 2 ? 'n' : 'N').first
             @mode = :data
           end
-          
+        
           break if @buffer.size < @data_size
           received << @buffer.read(@data_size)
           @mode = :prefix
