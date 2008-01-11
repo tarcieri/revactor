@@ -18,25 +18,8 @@ module Revactor
   #
   # The design is modeled off Erlang/OTP's gen_server
   class Server
-    class << self
-      # Construct a call message
-      def call_message(message, from = Actor.current)
-        T[:call, from, message]
-      end
-      
-      # Construct a call reply message
-      def call_reply_message(message, actor = Actor.current)
-        T[:call_reply, from, message]
-      end
-      
-      # Construct a call error message
-      def call_error_message(message, from = Actor.current)
-        T[:call_error, from, message]
-      end
-    end
-    
     # How long to wait for a response to a call before timing out
-    # This value also borrowed from Erlang
+    # This value also borrowed from Erlang.  More cargo culting!
     DEFAULT_CALL_TIMEOUT = 5
     
     def initialize(obj, options = {}, *args)
@@ -53,7 +36,7 @@ module Revactor
     def call(message, options = {})
       options[:timeout] ||= DEFAULT_CALL_TIMEOUT
       
-      @actor << Server.call_message(message)
+      @actor << T[:call, Actor.current, message]
       Actor.receive do |filter|
         filter.when(proc {|m| m[0] == :call_reply and m[1] == @actor}) { |m| m[3] }
         filter.when(proc {|m| m[0] == :call_error and m[1] == @actor}) { |m| raise m[3] }
@@ -63,7 +46,7 @@ module Revactor
     
     # Send a cast to the server
     def cast(message)
-      @actor << [:cast, message]
+      @actor << T[:cast, message]
       message
     end
     
@@ -71,7 +54,7 @@ module Revactor
       @running = true
       while @running do
         Actor.receive do |filter|
-          filter.when(Actor::ANY) { |message| handle_message(message) }
+          filter.when(Actor::ANY_MESSAGE) { |message| handle_message(message) }
           filter.after(@timeout) { stop(:timeout) } if @timeout
         end
       end
@@ -99,7 +82,7 @@ module Revactor
         case result.first
         when :reply
           _, reply, @state, @timeout = result
-          from << Server.call_reply_message(reply)
+          from << T[:call_reply, Actor.current, reply]
         when :noreply
           _, @state, @timeout = result
         when :stop
@@ -108,7 +91,7 @@ module Revactor
         end
       rescue Exception => ex
         log_exception(ex)
-        from << Server.call_error_message(ex)
+        from << T[:call_error, Actor.current, ex]
       end
     end
     
