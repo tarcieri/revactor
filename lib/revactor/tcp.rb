@@ -182,7 +182,7 @@ module Revactor
       
       # Write data to the socket.  The call blocks until all data has been written.
       def write(data)
-        super
+        super(encode(data))
         
         Actor.receive do |filter|
           filter.when(proc do |m| 
@@ -209,7 +209,7 @@ module Revactor
       #
       
       def initialize_filter(*filterset)
-        return [] if filterset.empty?
+        return filterset if filterset.empty?
         
         filterset.map do |filter|
           case filter
@@ -244,6 +244,10 @@ module Revactor
             a2 + filter.decode(d)
           end
         end
+      end
+      
+      def encode(message)
+        result = @filterset.reverse.reduce(message) { |m, filter| filter.encode(*m) }
       end
       
       #
@@ -308,9 +312,6 @@ module Revactor
         }.merge(options)
         
         @active, @controller = opts[:active], opts[:controller]
-        
-        # Verify the filter initialize
-        initialize_filter(*options[:filter])
         @filterset = options[:filter]
         
         @accepting = false
