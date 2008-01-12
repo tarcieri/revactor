@@ -92,7 +92,7 @@ module Revactor
         @controller ||= options[:controller] || Actor.current
         @filterset ||= initialize_filter(*options[:filter])
         
-        @read_buffer = ''
+        @read_buffer = Rev::Buffer.new
       end
       
       # Enable or disable active mode data reception.  State can be any
@@ -109,8 +109,7 @@ module Revactor
         
         if [true, :once].include?(state)
           unless @read_buffer.empty?
-            @controller << [:tcp, self, @read_buffer]
-            @read_buffer = ''
+            @controller << [:tcp, self, @read_buffer.read]
             return if state == :once
           end
           
@@ -128,22 +127,10 @@ module Revactor
       
       # Read data from the socket synchronously.  If a length is specified
       # then the call blocks until the given length has been read.  Otherwise
-      # the call blocks until it has read any data.
+      # the call blocks until it receives any data.
       def read(length = nil)
-        unless @read_buffer.empty?
-          if length.nil?
-            data = @read_buffer
-            @read_buffer = ''
-            return data
-          end
-          
-          # Slow in Ruby 1.9 :(
-          # return @read_buffer.slice!(0, length) if @read_buffer.size >= length
-          if @read_buffer.size >= length
-            data = @read_buffer[0..(length - 1)]
-            @read_buffer = @read_buffer[length..@read_buffer.size]
-            return data
-          end
+        unless @read_buffer.empty? or (length and @read_buffer.size < length)
+          return @read_buffer.read(length) 
         end
               
         was_enabled = enabled?
@@ -165,12 +152,7 @@ module Revactor
                 
                 if @read_buffer.size >= length
                   disable unless was_enabled
-                  
-                  # Slow in Ruby 1.9 :(
-                  # return @read_buffer.slice!(0, length) 
-                  data = @read_buffer[0..(length - 1)]
-                  @read_buffer = @read_buffer[length..@read_buffer.size]
-                  return data
+                  return @read_buffer.read(length)
                 end
               when :tcp_closed
                 raise EOFError, "connection closed"
