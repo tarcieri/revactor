@@ -7,6 +7,9 @@
 require File.dirname(__FILE__) + '/../revactor'
 
 module Revactor
+  # The TCP module holds all Revactor functionality related to the
+  # Transmission Control Protocol, including drop-in replacements
+  # for Ruby TCP Sockets which can operate concurrently using Actors.
   module TCP
     # Number of seconds to wait for a connection
     CONNECT_TIMEOUT = 10
