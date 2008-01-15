@@ -95,6 +95,7 @@ module Revactor
         @controller ||= options[:controller] || Actor.current
         @filterset ||= initialize_filter(*options[:filter])
         
+        @receiver = @controller
         @read_buffer = Rev::Buffer.new
       end
       
@@ -106,13 +107,17 @@ module Revactor
       #   :once - A single message will be sent to the controlling actor
       #           then active mode will be disabled
       def active=(state)
+        unless @receiver == @controller
+          raise "cannot change active state during a synchronous call" 
+        end
+        
         unless [true, false, :once].include? state
           raise ArgumentError, "must be true, false, or :once" 
         end
         
         if [true, :once].include?(state)
           unless @read_buffer.empty?
-            @controller << [:tcp, self, @read_buffer.read]
+            @receiver << [:tcp, self, @read_buffer.read]
             return if state == :once
           end
           
@@ -125,6 +130,8 @@ module Revactor
       # Set the controlling actor
       def controller=(controller)
         raise ArgumentError, "controller must be an actor" unless controller.is_a? Actor
+        
+        @receiver = controller if @receiver == @controller
         @controller = controller
       end
       
@@ -132,11 +139,16 @@ module Revactor
       # then the call blocks until the given length has been read.  Otherwise
       # the call blocks until it receives any data.
       def read(length = nil)
+        # Only one synchronous call allowed at a time
+        raise "already being called synchronously" unless @receiver == @controller
+        
         unless @read_buffer.empty? or (length and @read_buffer.size < length)
           return @read_buffer.read(length) 
         end
-              
-        was_enabled = enabled?
+        
+        active = @active
+        @active = :once
+        @receiver = Actor.current
         enable unless enabled?
         
         loop do
@@ -147,17 +159,28 @@ module Revactor
               case message.first
               when :tcp
                 if length.nil?
-                  disable unless was_enabled
+                  @receiver = @controller
+                  @active = active
+                  enable if @active
+                  
                   return message[2]
                 end
                 
                 @read_buffer << message[2]
                 
                 if @read_buffer.size >= length
-                  disable unless was_enabled
+                  @receiver = @controller
+                  @active = active
+                  enable if @active
+                  
                   return @read_buffer.read(length)
                 end
               when :tcp_closed
+                unless @receiver == @controller
+                  @receiver = @controller
+                  @receiver << T[:tcp_closed, self]
+                end
+                
                 raise EOFError, "connection closed"
               end
             end
@@ -167,6 +190,14 @@ module Revactor
       
       # Write data to the socket.  The call blocks until all data has been written.
       def write(data)
+        # Only one synchronous call allowed at a time
+        raise "already being called synchronously" unless @receiver == @controller
+        
+        active = @active
+        @active = false
+        @receiver = Actor.current
+        disable if @active
+        
         super(encode(data))
         
         Actor.receive do |filter|
@@ -175,8 +206,16 @@ module Revactor
           end) do |message|
             case message.first
             when :tcp_write_complete
+              @receiver = @controller
+              @active = active
+              enable if @active
+              
               return data.size
             when :tcp_closed
+              @receiver = @controller
+              @active = active
+              enable if @active
+              
               raise EOFError, "connection closed"
             end
           end
@@ -240,19 +279,19 @@ module Revactor
       #
 
       def on_connect
-        @controller << T[:tcp_connected, self]
+        @receiver << T[:tcp_connected, self]
       end
 
       def on_connect_failed
-        @controller << T[:tcp_connect_failed, self]
+        @receiver << T[:tcp_connect_failed, self]
       end
 
       def on_resolve_failed
-        @controller << T[:tcp_resolve_failed, self]
+        @receiver << T[:tcp_resolve_failed, self]
       end
 
       def on_close
-        @controller << T[:tcp_closed, self]
+        @receiver << T[:tcp_closed, self]
       end
 
       def on_read(data)
@@ -260,9 +299,9 @@ module Revactor
         message = decode(data)
         
         if message.is_a?(Array) and not message.empty?
-          message.each { |msg| @controller << T[:tcp, self, msg] }
+          message.each { |msg| @receiver << T[:tcp, self, msg] }
         elsif message
-          @controller << T[:tcp, self, message]
+          @receiver << T[:tcp, self, message]
         else return
         end
           
@@ -273,7 +312,7 @@ module Revactor
       end
 
       def on_write_complete
-        @controller << T[:tcp_write_complete, self]
+        @receiver << T[:tcp_write_complete, self]
       end
     end
 
@@ -321,6 +360,7 @@ module Revactor
         raise "another actor is already accepting" if @accepting
         
         @accepting = true
+        @receiver = Actor.current
         enable
         
         Actor.receive do |filter|
@@ -347,7 +387,7 @@ module Revactor
         )
         sock.attach(evloop)
         
-        @controller << T[:tcp_connection, self, sock]
+        @receiver << T[:tcp_connection, self, sock]
         disable
       end
     end
