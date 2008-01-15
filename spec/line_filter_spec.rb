@@ -6,10 +6,10 @@
 
 require File.dirname(__FILE__) + '/../lib/revactor/filters/line'
 
-describe Revactor::Filters::Line do
+describe Revactor::Filter::Line do
   before(:each) do
     @payload = "foo\nbar\r\nbaz\n"
-    @filter = Revactor::Filters::Line.new
+    @filter = Revactor::Filter::Line.new
   end
   
   it "decodes lines from an input buffer" do

@@ -6,33 +6,33 @@
 
 require File.dirname(__FILE__) + '/../lib/revactor/filters/packet'
 
-describe Revactor::Filters::Packet do
+describe Revactor::Filter::Packet do
   before(:each) do
     @payload = "A test string"
   end
   
   it "decodes frames with 2-byte prefixes" do
-    filter = Revactor::Filters::Packet.new(2)
+    filter = Revactor::Filter::Packet.new(2)
     filter.decode([@payload.length].pack('n') << @payload).should == [@payload]
   end
   
   it "encodes frames with 2-byte prefixes" do
-    filter = Revactor::Filters::Packet.new(2)
+    filter = Revactor::Filter::Packet.new(2)
     filter.encode(@payload).should == [@payload.length].pack('n') << @payload
   end
     
   it "decodes frames with 4-byte prefixes" do
-    @filter = Revactor::Filters::Packet.new(4)    
+    @filter = Revactor::Filter::Packet.new(4)    
     @filter.decode([@payload.length].pack('N') << @payload).should == [@payload]
   end
   
   it "encodes frames with 4-byte prefixes" do
-    @filter = Revactor::Filters::Packet.new(4)    
+    @filter = Revactor::Filter::Packet.new(4)    
     @filter.encode(@payload).should == [@payload.length].pack('N') << @payload
   end
   
   it "reassembles fragmented frames" do
-    filter = Revactor::Filters::Packet.new(2)
+    filter = Revactor::Filter::Packet.new(2)
     
     msg1 = 'foobar'
     msg2 = 'baz'
@@ -52,7 +52,7 @@ describe Revactor::Filters::Packet do
   end
 
   it "raises an exception for overlength frames" do
-    filter = Revactor::Filters::Packet.new(2)
+    filter = Revactor::Filter::Packet.new(2)
     payload = 'X' * 65537
     proc { filter.encode payload }.should raise_error(ArgumentError)
   end
