@@ -5,7 +5,7 @@
 #++
 
 module Revactor
-  module Filters
+  module Filter
     class Line
       MAX_LENGTH = 1048576 # Maximum length of a single line
       

@@ -169,8 +169,9 @@ class Actor < Fiber
       def run
         return if @@running
         @@running = true
+        default_loop = Rev::Loop.default
         
-        until @@queue.empty? and Rev::Loop.default.watchers.empty?
+        until @@queue.empty? and default_loop.watchers.empty?
           @@queue.each do |actor|
             begin
               actor.resume
@@ -178,8 +179,9 @@ class Actor < Fiber
             end
           end
           
-          @@queue.clear         
-          Rev::Loop.default.run_once unless Rev::Loop.default.watchers.empty?
+          @@queue.clear
+          
+          default_loop.run_once unless default_loop.watchers.empty?
         end
         
         @@running = false
@@ -297,9 +299,10 @@ class Actor < Fiber
 
       def match(message)
         _, action = @ruleset.find do |pattern, _|
-          case pattern
-          when Proc then pattern.(message)
-          else pattern === message
+          if pattern.is_a? Proc
+            pattern.(message)
+          else
+            pattern === message
           end
         end
 

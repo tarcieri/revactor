@@ -342,7 +342,7 @@ module Revactor
           :active => @active,
           :filter => @filterset
         )
-        sock.attach(Rev::Loop.default)
+        sock.attach(evloop)
         
         @controller << T[:tcp_connection, self, sock]
         disable

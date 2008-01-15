@@ -9,7 +9,7 @@ require 'rubygems'
 require 'rev'
 
 module Revactor
-  module Filters
+  module Filter
     class Packet
       def initialize(size = 2)
         unless size == 2 or size == 4
