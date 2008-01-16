@@ -153,16 +153,16 @@ module Revactor
         
         loop do
           Actor.receive do |filter|
-            filter.when(Case[:tcp, self, Object]) do |message|
+            filter.when(Case[:tcp, self, Object]) do |_, _, data|
               if length.nil?
                 @receiver = @controller
                 @active = active
                 enable if @active
                 
-                return message[2]
+                return data
               end
               
-              @read_buffer << message[2]
+              @read_buffer << data
               
               if @read_buffer.size >= length
                 @receiver = @controller
