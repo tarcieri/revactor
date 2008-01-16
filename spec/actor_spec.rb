@@ -83,29 +83,7 @@ describe Actor do
       ['first message', 'second message', 'third message'].each { |m| actor << m }
       @actor_run.should be_true
     end
-    
-    it "filters messages by Proc" do
-      actor = Actor.new do
-        results = []
-        3.times do
-          results << Actor.receive do |filter|
-            filter.when(proc { |m| m[1] == :second }) { |m| m[0] }
-            filter.when(proc { |m| m[1] == :first })  { |m| m[0] }
-            filter.when(proc { |m| m[1] == :third })  { |m| m[0] }
-          end
-        end
-        results.should == ['first message', 'second message', 'third message']
-        @actor_run = true
-      end
-      
-      [
-        ['first message',  :first], 
-        ['second message', :second], 
-        ['third message',  :third]
-      ].each { |m| actor << m }
-      @actor_run.should be_true
-    end
-    
+        
     it "times out if a message isn't received after the specifed interval" do
       actor = Actor.new do
         Actor.receive do |filter|
@@ -117,12 +95,12 @@ describe Actor do
       @actor_run.should be_true
     end
     
-    it "matches any message with Actor::ANY_MESSAGE" do
+    it "matches any message with Object" do
       actor = Actor.new do
         result = []
         3.times do
           result << Actor.receive do |filter|
-            filter.when(Actor::ANY_MESSAGE) { |m| m }
+            filter.when(Object) { |m| m }
           end
         end
         
@@ -138,7 +116,7 @@ describe Actor do
   it "detects dead actors" do
     actor = Actor.new do
       Actor.receive do |filter|
-        filter.when(Actor::ANY_MESSAGE) {}
+        filter.when(Object) {}
       end
     end
     

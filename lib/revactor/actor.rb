@@ -295,14 +295,7 @@ class Actor < Fiber
       end
 
       def match(message)
-        _, action = @ruleset.find do |pattern, _|
-          if pattern.is_a? Proc
-            pattern.(message)
-          else
-            pattern === message
-          end
-        end
-
+        _, action = @ruleset.find { |pattern, _| pattern === message }
         action
       end
 

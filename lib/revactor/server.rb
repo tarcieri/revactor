@@ -38,8 +38,8 @@ module Revactor
       
       @actor << T[:call, Actor.current, message]
       Actor.receive do |filter|
-        filter.when(proc {|m| m[0] == :call_reply and m[1] == @actor}) { |m| m[3] }
-        filter.when(proc {|m| m[0] == :call_error and m[1] == @actor}) { |m| raise m[3] }
+        filter.when(Case[:call_reply, @actor, Object]) { |m| m[2] }
+        filter.when(Case[:call_error, @actor, Object]) { |m| raise m[2] }
         filter.after(options[:timeout]) { raise RuntimeError, 'timeout' }
       end
     end
