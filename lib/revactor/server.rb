@@ -54,7 +54,7 @@ module Revactor
       @running = true
       while @running do
         Actor.receive do |filter|
-          filter.when(Actor::ANY_MESSAGE) { |message| handle_message(message) }
+          filter.when(Object) { |message| handle_message(message) }
           filter.after(@timeout) { stop(:timeout) } if @timeout
         end
       end

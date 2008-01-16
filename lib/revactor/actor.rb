@@ -27,9 +27,6 @@ class ActorError < StandardError; end
 #
 class Actor < Fiber
   include Enumerable
-    
-  # Actor::ANY_MESSAGE can be used in a filter match any message
-  ANY_MESSAGE = Object unless defined? Actor::ANY_MESSAGE
   @@registered = {}
 
   class << self

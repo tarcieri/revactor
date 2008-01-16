@@ -6,6 +6,7 @@
 
 require 'rubygems'
 require 'rev'
+require 'case'
 
 # This is mostly in hopes of a bright future with Rubinius
 # The recommended container for all datagrams sent between
