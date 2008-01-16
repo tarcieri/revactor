@@ -38,9 +38,9 @@ module Revactor
       
       @actor << T[:call, Actor.current, message]
       Actor.receive do |filter|
-        filter.when(Case[:call_reply, @actor, Object]) { |m| m[2] }
-        filter.when(Case[:call_error, @actor, Object]) { |m| raise m[2] }
-        filter.after(options[:timeout]) { raise RuntimeError, 'timeout' }
+        filter.when(Case[:call_reply, @actor, Object]) { |_, _, reply| reply }
+        filter.when(Case[:call_error, @actor, Object]) { |_, _, ex| raise ex }
+        filter.after(options[:timeout]) { raise 'timeout' }
       end
     end
     
