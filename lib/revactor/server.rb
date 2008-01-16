@@ -24,12 +24,11 @@ module Revactor
     
     def initialize(obj, options = {}, *args)
       @obj = obj
+      @timeout = nil
+      @state = obj.start(*args)
       @actor = Actor.new(&method(:start).to_proc)
       
       Actor[options[:register]] = @actor if options[:register]
-      
-      @timeout = nil
-      @state = obj.start(*args)
     end
     
     # Call the server with the given message
