@@ -24,7 +24,7 @@ module Revactor
     # or IP address.  Accepts the following options:
     #
     #   :active - Controls how data is read from the socket.  See the
-    #             documentation for #active=
+    #             documentation for Revactor::TCP::Socket#active=
     #
     def self.connect(host, port, options = {})
       socket = Socket.connect host, port, options
