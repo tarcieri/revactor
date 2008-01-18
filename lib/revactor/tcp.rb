@@ -48,11 +48,11 @@ module Revactor
         end
       end
     end
-    
+
     # Listen on the specified address and port.  Accepts the following options:
     #
-    #   :active - Controls how connections are accepted from the socket.  
-    #             See the documentation for #active=
+    #   :active - Default active setting for new connections.  See the
+    #             documentation Rev::TCP::Socket#active= for more info
     #
     #   :controller - The controlling actor, default Actor.current
     #
