@@ -290,3 +290,18 @@ Ruby this isn't possible to achieve.
 Future versions of Revactor may attempt to address this, and also change the
 present implementation (which is effectively a carbon copy of Erlang's 
 gen_server) to be more Ruby-like.
+
+== Mongrel
+
+Revactor includes complete support for running Mongrel on top of Actors and
+Revactor::TCP.  The implementation monkeypatches two methods in the
+Mongrel::HttpServer class.  Initial benchmarks show better throughput
+and concurrency than threaded Mongrel running on Ruby 1.8 or 1.9.
+
+To use Mongrel on top of Revactor, just:
+
+  require 'revactor/mongrel'
+
+Then call Mongrel within an Actor.start block.  The semantics are the same.
+The only difference is that Actors, not Threads, are being used for 
+concurrency.

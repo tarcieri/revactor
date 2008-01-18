@@ -14,7 +14,7 @@ GEMSPEC = Gem::Specification.new do |s|
 
   # Dependencies
   s.add_dependency("rev", ">= 0.1.2")
-  s.add_dependency("case", ">= 0.1")
+  s.add_dependency("case", ">= 0.3")
 
   # RubyForge info
   s.homepage = "http://revactor.org"
