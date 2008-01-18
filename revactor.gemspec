@@ -8,6 +8,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.date = "2008-1-15"
   s.summary = "Revactor is an Actor implementation for writing high performance concurrent programs"
   s.platform = Gem::Platform::RUBY
+  s.required_ruby_version = '>= 1.9.0'
 
   # Gem contents
   s.files = Dir.glob("{lib,examples,tools}/**/*") + ['Rakefile', 'revactor.gemspec']
