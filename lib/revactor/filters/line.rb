@@ -6,15 +6,27 @@
 
 module Revactor
   module Filter
+    # A filter for line based protocols which are framed using LF or CRLF 
+    # encoding, such as IRC.  Both LF and CRLF are supported and no 
+    # validation is done on bare LFs for CRLF encoding.  The output
+    # is chomped and delivered without any newline.
     class Line
       MAX_LENGTH = 1048576 # Maximum length of a single line
       
+      # Create a new Line filter.  Accepts the following options:
+      #
+      #   delimiter: A character to use as a delimiter.  Defaults to "\n"
+      #              Character sequences are not supported.
+      #
+      #   maxlength: Maximum length of a line
+      #
       def initialize(options = {})
         @input = ''
         @delimiter = options[:delimiter] || "\n"
         @size_limit = options[:maxlength] || MAX_LENGTH
       end
       
+      # Callback for processing incoming lines
       def decode(data)
         lines = data.split @delimiter, -1
         
@@ -31,6 +43,7 @@ module Revactor
         lines.map(&:chomp)
       end
       
+      # Encode lines using the current delimiter
       def encode(*data)
         data.reduce("") { |str, d| str << d << @delimiter }
       end

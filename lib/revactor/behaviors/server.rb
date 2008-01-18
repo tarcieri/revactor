@@ -31,7 +31,7 @@ module Revactor
       # can be controlled a lot more closely than is possible with standard
       # object oriented behavior.  The latest version of state is passed
       # to all Revactor::Server callbacks and is only mutated upon a
-      # successful return (without exceptions)
+      # successful return (unless an exception was raised)
       #
       def start(*args)
         return :ok

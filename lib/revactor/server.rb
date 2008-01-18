@@ -22,6 +22,14 @@ module Revactor
     # This value also borrowed from Erlang.  More cargo culting!
     DEFAULT_CALL_TIMEOUT = 5
     
+    # Create a new server.  Accepts the following options:
+    #
+    #   register: Register the Actor in the Actor registry under
+    #             the given term
+    #
+    # Any options passed after the options hash are passed to the
+    # start method of the given object.
+    #
     def initialize(obj, options = {}, *args)
       @obj = obj
       @timeout = nil
@@ -49,6 +57,11 @@ module Revactor
       message
     end
     
+    #########
+    protected
+    #########
+    
+    # Start the server
     def start
       @running = true
       while @running do
@@ -58,10 +71,6 @@ module Revactor
         end
       end
     end
-    
-    #########
-    protected
-    #########
     
     # Dispatch the incoming message to the appropriate handler
     def handle_message(message)
@@ -135,8 +144,8 @@ module Revactor
     end
     
     # Log an exception
-    # FIXME this should really go to a logger, not STDERR
     def log_exception(exception)
+      # FIXME this should really go to a logger, not STDERR
       STDERR.write "Rev::Server exception: #{exception}\n"
       STDERR.write exception.backtrace + "\n"
     end

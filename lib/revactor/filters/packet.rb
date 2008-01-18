@@ -10,6 +10,9 @@ require 'rev'
 
 module Revactor
   module Filter
+    # A filter for "packet" protocols which are framed using a fix-sized
+    # length prefix followed by a message body, such as DRb.  Either 16-bit
+    # or 32-bit prefixes are supported.
     class Packet
       def initialize(size = 2)
         unless size == 2 or size == 4

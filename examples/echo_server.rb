@@ -9,8 +9,6 @@ Actor.start do
 
   loop do
     Actor.spawn(listener.accept) do |sock|
-      sock.controller = Actor.current
-
       loop do
         begin
           sock.write sock.read

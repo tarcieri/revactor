@@ -7,6 +7,7 @@
 require File.dirname(__FILE__) + '/../revactor'
 require 'fiber'
 
+# Raised whenever any Actor-specific problems occur
 class ActorError < StandardError; end
 
 # Actors are lightweight concurrency primitives which communiucate via message
@@ -16,14 +17,9 @@ class ActorError < StandardError; end
 #
 # The Actor class is definined in the global scope in hopes of being generally
 # useful for Ruby 1.9 users while also attempting to be as compatible as
-# possible with the Rubinius Actor implementation.  In this way it should
-# be possible to run programs written using Rev on top of Rubinius and hopefully
-# get some better performance.
-#
-# Rev Actor implements some features that Rubinius does not, however, such as
-# receive timeouts, receive filter-by-proc, arguments passed to spawn, and an
-# actor dictionary (used for networking functionality).  Hopefully these 
-# additional features will not get in the way of Rubinius / Rev compatibility.
+# possible with the Omnibus and Rubinius Actor implementations.  In this way it 
+# should be possible to run programs written using Revactor to on top of other
+# Actor implementations.
 #
 class Actor < Fiber
   include Enumerable
@@ -149,7 +145,7 @@ class Actor < Fiber
   
   attr_reader :_mailbox
   
-  # Actor scheduler class, maintains a run queue of actors with outstanding
+  # The Actor Scheduler maintains a run queue of actors with outstanding
   # messages who have not yet processed their mailbox.  If all actors have
   # processed their mailboxes then the scheduler waits for any outstanding
   # Rev events.  If there are no active Rev watchers then the scheduler exits.
@@ -158,11 +154,14 @@ class Actor < Fiber
     @@running = false
 
     class << self
+      # Schedule an Actor to be executed, and run the scheduler if it isn't
+      # currently running
       def <<(actor)
         @@queue << actor
         run unless @@running
       end
       
+      # Run the scheduler
       def run
         return if @@running
         @@running = true
@@ -274,12 +273,17 @@ class Actor < Fiber
         @ruleset = []
       end
 
+      # Provide a pattern to match against with === and a block to call
+      # when the pattern is matched.
       def when(pattern, &action)
         raise ArgumentError, "no block given" unless action
         @ruleset << [pattern, action]
       end
 
+      # Provide a timeout (in seconds, can be a Float) to wait for matching
+      # messages.  If the timeout elapses, the given block is called.
       def after(timeout, &action)
+        raise ArgumentError, "no block given" unless action
         raise ArgumentError, "timeout already specified" if @mailbox.timer
         raise ArgumentError, "must be zero or positive" if timeout < 0
         @mailbox.timeout_action = action
@@ -294,11 +298,13 @@ class Actor < Fiber
         end
       end
 
+      # Match a message using the filter
       def match(message)
         _, action = @ruleset.find { |pattern, _| pattern === message }
         action
       end
 
+      # Is the filterset empty?
       def empty?
         @ruleset.empty?
       end

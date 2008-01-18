@@ -14,7 +14,10 @@ module Revactor
     # Number of seconds to wait for a connection
     CONNECT_TIMEOUT = 10
 
+    # Raised when a connection to a remote server fails
     class ConnectError < StandardError; end
+    
+    # Raised when hostname resolution for a remote server fails
     class ResolveError < ConnectError; end
     
     # Connect to the specified host and port.  Host may be a domain name
@@ -226,6 +229,7 @@ module Revactor
       # Filter setup
       #
       
+      # Initialize filter change
       def initialize_filter(*filterset)
         return filterset if filterset.empty?
         
@@ -248,6 +252,7 @@ module Revactor
         end
       end
       
+      # Lookup filters referenced as symbols
       def symbol_to_filter(filter)
         case filter
         when :line then Revactor::Filters::Line
@@ -256,6 +261,7 @@ module Revactor
         end
       end
       
+      # Decode data through the filter chain
       def decode(data)
         @filterset.reduce([data]) do |a, filter|
           a.reduce([]) do |a2, d|
@@ -264,14 +270,15 @@ module Revactor
         end
       end
       
+      # Encode data through the filter chain
       def encode(message)
-        result = @filterset.reverse.reduce(message) { |m, filter| filter.encode(*m) }
+        @filterset.reverse.reduce(message) { |m, filter| filter.encode(*m) }
       end
       
       #
-      # Rev::TCPSocket callbacks
+      # Rev::TCPSocket callback
       #
-
+      
       def on_connect
         @receiver << T[:tcp_connected, self]
       end
@@ -335,6 +342,7 @@ module Revactor
         @accepting = false
       end
       
+      # Change the default active setting for newly accepted connections
       def active=(state)
         unless [true, false, :once].include? state
           raise ArgumentError, "must be true, false, or :once" 
@@ -343,7 +351,7 @@ module Revactor
         @active = state
       end
       
-      # Set the controlling actor
+      # Change the default controller for newly accepted connections
       def controller=(controller)
         raise ArgumentError, "controller must be an actor" unless controller.is_a? Actor
         @controller = controller
