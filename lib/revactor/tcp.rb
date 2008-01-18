@@ -367,9 +367,7 @@ module Revactor
         
         Actor.receive do |filter|
           filter.when(Case[:tcp_connection, self, Object]) do |_, _, sock|
-            @accepting = false
-            disable
-            
+            @accepting = false            
             return sock
           end
         end
@@ -392,6 +390,7 @@ module Revactor
         sock.attach(evloop)
         
         @receiver << T[:tcp_connection, self, sock]
+        disable
       end
     end
   end

@@ -207,7 +207,7 @@ class Actor < Fiber
       raise ArgumentError, "no filter block given" unless block_given?
 
       # Clear mailbox processing variables
-      action = matched_index = matched_message = nil
+      action = matched_index = nil
       processed_upto = 0
       
       # Clear timeout variables
@@ -222,13 +222,13 @@ class Actor < Fiber
       # Process incoming messages
       while action.nil?
         @queue[processed_upto..@queue.size].each_with_index do |message, index|
-          processed_upto += 1
-          next unless (action = filter.match message)
+          unless (action = filter.match message)
+            processed_upto += 1
+            next
+          end
           
           # We've found a matching action, so break out of the loop
-          matched_index = index
-          matched_message = message
-
+          matched_index = processed_upto + index
           break
         end
 
@@ -247,9 +247,8 @@ class Actor < Fiber
       # If we encountered a timeout, call the action directly
       return action.call if @timed_out
       
-      # Otherwise we matched a message, so process it with the action
-      @queue.delete_at matched_index
-      return action.(matched_message)
+      # Otherwise we matched a message, so process it with the action      
+      return action.(@queue.delete_at matched_index)
     end
 
     # Timeout class, used to implement receive timeouts
