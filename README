@@ -58,7 +58,7 @@ spawns all the Actors your application needs to get started and nothing else.
 Once you're in Actor world, you can begin making Actors and sending them
 events.  You create Actors with Actor.spawn:
 
-  myactor = Actor.spawn { puts "Yay, I'm an Actor!" }
+  myactor = Actor.spawn { puts "I'm an Actor!" }
 
 When you spawn an Actor it's scheduled to run after the current Actor either
 completes or calls Actor.receive.  Speaking of which, Actor.receive is used
@@ -66,7 +66,7 @@ to receive messages:
 
   myactor = Actor.spawn do
     Actor.receive do |filter|
-      filter.when(:dog) { puts "Yay, I got a dog!" }
+      filter.when(:dog) { puts "I got a dog!" }
     end
   end
 
@@ -117,9 +117,9 @@ matches each member of the given tuple with ===.  Once again, Object is a
 wildcard, so the other members of the message can be anything.
 
 Want more complex pattern matching?  Case lets you use a block to match any
-member, ala:
+member by using a guard, ala:
 
-  filter.when(Case[:foobar, Case::Predicate { |n| n > 100 }, Object]) { ... }
+  filter.when(Case[:foobar, Case.guard { |n| n > 100 }, Object]) { ... }
 
 This will look for an Array / Tuple with three members, whose first member is
 the symbol :foobar and whose second member is greater than 100.
@@ -127,7 +127,7 @@ the symbol :foobar and whose second member is greater than 100.
 You can also specify how long you wish to wait for a message before timing out.
 This is accomplished with Filter#after:
 
-  filter.after(0.5) { raise 'it timed out :(' }
+  filter.after(0.5) { raise 'it timed out ;_;' }
 
 The #after method takes a duration in seconds to wait (in the above example it
 waits a half second) before the receive operation times out.
@@ -283,4 +283,10 @@ To begin implementing a server, look at Revactor::Behavior::Server, which is
 a module demonstrating the API.  Servers are implemented using a set of
 callbacks which are called in response to certain events.
 
+Servers should implement a number of principles, including transactional
+semantics, however due to the side effect potential of mutable state in
+Ruby this isn't possible to achieve.
 
+Future versions of Revactor may attempt to address this, and also change the
+present implementation (which is effectively a carbon copy of Erlang's 
+gen_server) to be more Ruby-like.
