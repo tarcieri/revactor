@@ -6,7 +6,6 @@ writing Erlang-like network services and tools.
 
 You can load Revactor into your Ruby 1.9 application with:
 
-  require 'rubygems'
   require 'revactor'
 
 If you'd like to learn more about the Actor model, more information is
