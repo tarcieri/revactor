@@ -146,8 +146,8 @@ module Revactor
     # Log an exception
     def log_exception(exception)
       # FIXME this should really go to a logger, not STDERR
-      STDERR.write "Rev::Server exception: #{exception}\n"
-      STDERR.write exception.backtrace + "\n"
+      STDERR.puts "Rev::Server exception: #{exception}"
+      STDERR.puts exception.backtrace
     end
   end
 end
