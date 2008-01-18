@@ -310,3 +310,30 @@ To use Mongrel on top of Revactor, just:
 Then call Mongrel within an Actor.start block.  The semantics are the same.
 The only difference is that Actors, not Threads, are being used for 
 concurrency.
+
+== Roadmap
+
+Revactor is still in its infancy.  Erlang and its Open Telcom Platform are an
+extremely feature rich platform, and many features can be borrowed and
+incorporated into Revactor.
+
+The first and foremost feature to be added is the concept of linked Actors.
+This idea is somewhat difficult to explain for the uninitiated, but the general
+concept is that interdependent Actors are linked in a graph.  When one Actor
+dies, it kills all linked Actors is well.  However, special Actors trap the
+exit messages from the Actors they're linked with.  These Actors are generally
+supervisors and restart any linked Actor graphs which crash.
+
+Next on the agenda is implementing DRb.  This should be possible simply by
+monkeypatching the existing DRb implementation to run on top of Revactor::TCP.
+Once DRb has been implemented it should be fairly trivial to implement
+distributed Actor networks over TCP using DRb as the underlying message
+passing protocol.
+
+Long term items include implementation of more Filters, Behaviors, and protocol
+modules.  These include an HTTP client (subclassed from the client in Rev),
+an HTTP server adapter (using the Mongrel parser), and the gen_fsm behavior from
+Erlang.  Additional areas of concern are addressing the problems of mutable 
+state in conjunction with Server and FSM behaviors.  A possible solution is
+to implement a tuple which stores immutable collections of primitive types
+like numbers, strings, and symbols, but this approach is likely to be slow.
