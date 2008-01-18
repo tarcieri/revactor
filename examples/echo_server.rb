@@ -19,6 +19,7 @@ Actor.start do
     # Accept an incoming connection and start a new Actor
     # to handle it
     Actor.spawn(listener.accept) do |sock|
+      puts "#{sock.remote_addr}:#{sock.remote_port} connected"
 
       # Begin echoing received data
       loop do
@@ -26,6 +27,8 @@ Actor.start do
           # Write everything we read
           sock.write sock.read
         rescue EOFError
+          puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
+
           # Break (and exit the current actor) if the connection
           # is closed, just like with a normal Ruby socket
           break

@@ -366,9 +366,9 @@ module Revactor
         enable
         
         Actor.receive do |filter|
-          filter.when(Case[:tcp_connection, self, Object]) do |message|
+          filter.when(Case[:tcp_connection, self, Object]) do |_, _, sock|
             @accepting = false
-            return message[2]
+            return sock
           end
         end
       end
