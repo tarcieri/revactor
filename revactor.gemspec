@@ -10,7 +10,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.platform = Gem::Platform::RUBY
 
   # Gem contents
-  s.files = Dir.glob("{bin,lib,conf,status}/**/*") + ['Rakefile', 'revactor.gemspec']
+  s.files = Dir.glob("{lib,examples,tools}/**/*") + ['Rakefile', 'revactor.gemspec']
 
   # Dependencies
   s.add_dependency("rev", ">= 0.1.2")
