@@ -63,8 +63,8 @@ class Actor < Fiber
     # Wait for messages matching a given filter.  The filter object is yielded
     # to be block passed to receive.  You can then invoke the when argument
     # which takes a parameter and a block.  Messages are compared (using ===)
-    # against the parameter, or if the parameter is a proc it is called with
-    # a message and matches if the proc returns true.
+    # against the parameter.  The Case gem includes several tools for matching
+    # messages using ===
     #
     # The first filter to match a message in the mailbox is executed.  If no
     # filters match then the actor sleeps.
