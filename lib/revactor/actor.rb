@@ -223,6 +223,9 @@ class Actor < Fiber
       while action.nil?
         @queue[processed_upto..@queue.size].each_with_index do |message, index|
           unless (action = filter.match message)
+            # The filter did not match an action for the current message
+            # Keep track of which messages we've ran the filter across so it doesn't
+            # get run against messages it already failed to match
             processed_upto += 1
             next
           end
@@ -282,10 +285,11 @@ class Actor < Fiber
       # Provide a timeout (in seconds, can be a Float) to wait for matching
       # messages.  If the timeout elapses, the given block is called.
       def after(timeout, &action)
-        raise ArgumentError, "no block given" unless action
         raise ArgumentError, "timeout already specified" if @mailbox.timer
         raise ArgumentError, "must be zero or positive" if timeout < 0
-        @mailbox.timeout_action = action
+        
+        # Don't explicitly require an action to be specified for a timeout
+        @mailbox.timeout_action = action || proc {}
         
         if timeout > 0
           @mailbox.timer = Timer.new(timeout, Actor.current).attach(Rev::Loop.default)

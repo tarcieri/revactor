@@ -11,10 +11,10 @@ GEMSPEC = Gem::Specification.new do |s|
   s.required_ruby_version = '>= 1.9.0'
 
   # Gem contents
-  s.files = Dir.glob("{lib,examples,tools}/**/*") + ['Rakefile', 'revactor.gemspec']
+  s.files = Dir.glob("{lib,examples,tools,spec}/**/*") + ['Rakefile', 'revactor.gemspec']
 
   # Dependencies
-  s.add_dependency("rev", ">= 0.1.2")
+  s.add_dependency("rev", ">= 0.1.3")
   s.add_dependency("case", ">= 0.3")
 
   # RubyForge info
