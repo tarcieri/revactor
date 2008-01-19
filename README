@@ -101,12 +101,9 @@ against a message and a block to call if the message matches.  The pattern is
 compared to the message using ===, the same thing Ruby uses for case statements.
 You can think of the filter as a big case statement.
 
-Understanding the === statement is a bit strange, so here's a short guide:
-
-You can pass #when a class to match against the message.  Obviously passing it
-Object will match all messages.
-
-You can pass #when a regexp to match against the message.
+Like the case statement, a class matches any objects of that class.  Since all 
+classes descend from Object passing Object will match all messages.  You can
+also pass a regexp to match against a string.
 
 Revactor installs the Case gem by default.  This is useful for matching against
 messages stored in Arrays, or in fixed-size arrays called Tuples.  Case can
