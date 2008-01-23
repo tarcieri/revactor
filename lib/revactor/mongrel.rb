@@ -21,7 +21,6 @@ module Mongrel
   # Actors for concurrency.
   class HttpServer
     def initialize(host, port, num_processors=950, throttle=0, timeout=60)
-      @socket = Revactor::TCP.listen(host, port)
       @classifier = URIClassifier.new
       @host = host
       @port = port
@@ -32,6 +31,7 @@ module Mongrel
 
     # Runs the thing.  It returns the Actor the listener is running in.
     def run
+      @socket = Revactor::TCP.listen(host, port)
       @acceptor = Actor.new do
         begin
           while true

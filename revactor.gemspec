@@ -14,8 +14,8 @@ GEMSPEC = Gem::Specification.new do |s|
   s.files = Dir.glob("{lib,examples,tools,spec}/**/*") + ['Rakefile', 'revactor.gemspec']
 
   # Dependencies
-  s.add_dependency("rev", ">= 0.1.3")
-  s.add_dependency("case", ">= 0.3")
+  s.add_dependency("rev", ">= 0.1.4")
+  s.add_dependency("case", ">= 0.4")
 
   # RubyForge info
   s.homepage = "http://revactor.org"

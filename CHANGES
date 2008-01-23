@@ -1,3 +1,14 @@
+0.1.1:
+
+* Provide Revactor modules classes within the Actor namespace unless they have
+  already been defined
+
+* Initial linking implementation
+
+* Include Revactor::VERSION variable
+
+* Mailbox filters can now include only a timeout
+
 0.1.0:
 
 * Initial release

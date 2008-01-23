@@ -21,9 +21,22 @@ end
 # Shortcut Tuple as T
 T = Tuple unless defined? T
 
+module Revactor
+  Revactor::VERSION = '0.1.1' unless defined? Revactor::VERSION
+  def self.version() VERSION end
+end
+
 require File.dirname(__FILE__) + '/revactor/actor'
 require File.dirname(__FILE__) + '/revactor/server'
 require File.dirname(__FILE__) + '/revactor/tcp'
 require File.dirname(__FILE__) + '/revactor/behaviors/server'
 require File.dirname(__FILE__) + '/revactor/filters/line'
 require File.dirname(__FILE__) + '/revactor/filters/packet'
+
+# Place Revactor modules and classes under the Actor namespace
+class Actor
+  Actor::TCP = Revactor::TCP unless defined? Actor::TCP
+  Actor::Server = Revactor::Server unless defined? Actor::Server
+  Actor::Behavior = Revactor::Behavior unless defined? Actor::Behavior
+  Actor::Filter = Revactor::Filter unless defined? Actor::Filter
+end

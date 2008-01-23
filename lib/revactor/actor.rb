@@ -49,7 +49,7 @@ class Actor < Fiber
     
     alias_method :spawn, :new
     
-    # This will be defined differently in the future, but now the two are the same
+    # This will be defined differently in the future, but is just aliased now 
     alias_method :start, :new
     
     # Obtain a handle to the current Actor
@@ -129,7 +129,7 @@ class Actor < Fiber
     # Erlang discards messages sent to dead actors, and if Erlang does it,
     # it must be the right thing to do, right?  Hooray for the Erlang 
     # cargo cult!  I think they do this because dealing with errors raised
-    # from dead actors complicates overall error handling too much to be worth it.
+    # from dead actors greatly overcomplicates overall error handling
     return message if dead?
     
     @_mailbox << message
@@ -157,7 +157,9 @@ class Actor < Fiber
       # Schedule an Actor to be executed, and run the scheduler if it isn't
       # currently running
       def <<(actor)
-        @@queue << actor
+        raise ArgumentError, "must be an Actor" unless actor.is_a? Actor
+
+        @@queue << actor unless @@queue.last == actor
         run unless @@running
       end
       
@@ -224,8 +226,8 @@ class Actor < Fiber
         @queue[processed_upto..@queue.size].each_with_index do |message, index|
           unless (action = filter.match message)
             # The filter did not match an action for the current message
-            # Keep track of which messages we've ran the filter across so it doesn't
-            # get run against messages it already failed to match
+            # Keep track of which messages we've ran the filter across so it
+            # isn't re-run against messages it already failed to match
             processed_upto += 1
             next
           end
@@ -235,10 +237,10 @@ class Actor < Fiber
           break
         end
 
-        # If we've timed out, run the timeout action unless another has been found
+        # If we've timed out, run the timeout action unless we found another
         action ||= @timeout_action if @timed_out
 
-        # If we didn't find a matching action, yield until we get another message
+        # If no matching action is found, yield until we get another message
         Actor.yield unless action
       end
 
@@ -309,7 +311,7 @@ class Actor < Fiber
 
       # Is the filterset empty?
       def empty?
-        @ruleset.empty?
+        @ruleset.empty? and not @mailbox.timer
       end
     end
   end
