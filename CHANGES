@@ -3,6 +3,8 @@
 * Provide Revactor modules classes within the Actor namespace unless they have
   already been defined
 
+* Fix Filter initialization bug
+
 * Initial linking implementation
 
 * Include Revactor::VERSION variable

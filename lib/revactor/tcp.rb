@@ -255,8 +255,8 @@ module Revactor
       # Lookup filters referenced as symbols
       def symbol_to_filter(filter)
         case filter
-        when :line then Revactor::Filters::Line
-        when :packet then Revactor::Filters::Packet
+        when :line then Revactor::Filter::Line
+        when :packet then Revactor::Filter::Packet
         else raise ArgumentError, "unrecognized filter type: #{filter}"
         end
       end
