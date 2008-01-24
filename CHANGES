@@ -1,5 +1,9 @@
 0.1.1:
 
+* Rename Revactor::Server to Revactor::Delegator and make more like delegator.rb
+
+* Factor apart actor.rb into scheduler.rb and mailbox.rb
+
 * Provide Revactor modules classes within the Actor namespace unless they have
   already been defined
 
