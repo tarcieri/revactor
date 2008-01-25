@@ -32,12 +32,12 @@ module Mongrel
 
     # Runs the thing.  It returns the Actor the listener is running in.
     def run
-      @acceptor = Actor.new do
+      @acceptor = Actor.spawn do
         begin
           while true
             begin
               client = @socket.accept
-              actor = Actor.new client, &method(:process_client)
+              actor = Actor.spawn client, &method(:process_client)
               actor[:started_on] = Time.now
             rescue StopServer
               break
