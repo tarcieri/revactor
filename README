@@ -33,9 +33,6 @@ network servers painlessly while still guaranteeing correct operation:
   can preprocess or postprocess data before it's even delivered to an Actor.
   This is useful for handling protocol framing or other streaming transforms.
 
-* Behaviors - These are patterns for implementing Actors which accomplish
-  specific tasks.  Right now only the Server behavior is supported.
-
 == Actors
 
 Actors are lightweight concurrency primitives which communicate using message
@@ -261,24 +258,6 @@ constructs messages with a length prefix that specifies the size of the
 remaining message.  This is a simple and straightforward way to frame
 discrete messages on top of a streaming protocol like TCP, and is used for,
 among other things, DRb.
-
-== Behaviors
-
-Behaviors are kind of like design patterns for Actors.  Often you just want
-an Actor to hold some state and service calls which query or mutate that state.
-This behavior is wrapped up as a Server.
-
-To begin implementing a server, look at Revactor::Behavior::Server, which is
-a module demonstrating the API.  Servers are implemented using a set of
-callbacks which are called in response to certain events.
-
-Servers should implement a number of principles, including transactional
-semantics, however due to the side effect potential of mutable state in
-Ruby this isn't possible to achieve.
-
-Future versions of Revactor may attempt to address this, and also change the
-present implementation (which is effectively a carbon copy of Erlang's 
-gen_server) to be more Ruby-like.
 
 == Mongrel
 

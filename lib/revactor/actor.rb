@@ -13,6 +13,7 @@ class DeadActorError < StandardError; end
 # Monkeypatch Fiber to include an accessor to its current Actor
 class Fiber
   attr_reader :actor
+  attr_reader :scheduler
 end
 
 # Actors are lightweight concurrency primitives which communiucate via message
@@ -43,10 +44,13 @@ class Actor
         Actor.current.instance_eval { @dead = true }
       end
       
-      actor = Actor.new(fiber, Actor.current.scheduler)
-      fiber.instance_eval { @actor = actor }      
-      Actor.current.scheduler << actor
+      actor = Actor.new(fiber)
+      fiber.instance_eval { 
+        @actor = actor
+        @scheduler = actor.scheduler
+      }
       
+      Actor.scheduler << actor
       actor
     end
     
@@ -56,8 +60,12 @@ class Actor
       
       actor = Actor.new
       Fiber.current.instance_eval { @actor = actor }
-      
       actor
+    end
+    
+    # Obtain a handle to the current Scheduler
+    def scheduler
+      Fiber.current.scheduler or Fiber.current.instance_eval { @scheduler = Scheduler.new }
     end
     
     # Wait for messages matching a given filter.  The filter object is yielded
@@ -69,10 +77,6 @@ class Actor
     # The first filter to match a message in the mailbox is executed.  If no
     # filters match then the actor sleeps.
     def receive(&filter)
-      unless current.is_a?(Actor)
-        raise ActorError, "receive must be called in the context of an Actor"
-      end
-
       current.mailbox.receive(&filter)
     end
 
@@ -101,9 +105,9 @@ class Actor
     end
   end
   
-  def initialize(fiber = Fiber.current, scheduler = Scheduler.new)
+  def initialize(fiber = Fiber.current)
     @fiber = fiber
-    @scheduler = scheduler
+    @scheduler = Actor.scheduler
     @thread = Thread.current
     @dead = false
     @mailbox = Mailbox.new
