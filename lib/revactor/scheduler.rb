@@ -21,9 +21,16 @@ class Actor
     # currently running
     def <<(actor)
       raise ArgumentError, "must be an Actor" unless actor.is_a? Actor
-
+      
       @queue << actor unless @queue.last == actor
-      run unless @running
+      
+      unless @running
+        # Persist the fiber the scheduler runs in
+        @fiber ||= Fiber.new { loop { run; Fiber.yield } }
+        
+        # Resume the scheduler
+        @fiber.resume
+      end
     end
   
     # Run the scheduler

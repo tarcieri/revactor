@@ -39,7 +39,7 @@ class Actor
     def spawn(*args, &block)
       raise ArgumentError, "no block given" unless block
       
-      fiber = Fiber.new do 
+      fiber = Fiber.new do
         block.call(*args)
         Actor.current.instance_eval { @dead = true }
       end
@@ -66,6 +66,15 @@ class Actor
     # Obtain a handle to the current Scheduler
     def scheduler
       Fiber.current.scheduler or Fiber.current.instance_eval { @scheduler = Scheduler.new }
+    end
+    
+    # Reschedule the current actor for execution later
+    def reschedule
+      if scheduler.running? 
+        Fiber.yield
+      else
+        Actor.scheduler << Actor.current
+      end
     end
     
     # Wait for messages matching a given filter.  The filter object is yielded
