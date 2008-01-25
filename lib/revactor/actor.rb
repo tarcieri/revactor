@@ -12,7 +12,7 @@ class DeadActorError < StandardError; end
 
 # Monkeypatch Fiber to include an accessor to its current Actor
 class Fiber
-  attr_reader :_actor
+  attr_reader :actor
 end
 
 # Actors are lightweight concurrency primitives which communiucate via message
@@ -27,8 +27,9 @@ end
 # Actor implementations.
 #
 class Actor
-  attr_reader :_fiber
-  attr_reader :_scheduler
+  attr_reader :fiber
+  attr_reader :scheduler
+  attr_reader :mailbox
   
   @@registered = {}
 
@@ -36,36 +37,25 @@ class Actor
     # Create a new Actor with the given block and arguments
     def spawn(*args, &block)
       raise ArgumentError, "no block given" unless block
-
-      actor = Actor.new
       
       fiber = Fiber.new do 
         block.call(*args)
-        actor.instance_eval { @_dead = true }
+        Actor.current.instance_eval { @dead = true }
       end
       
-      fiber.instance_eval { @_actor = actor }
-      actor.instance_eval { 
-        @_fiber = fiber
-        @_scheduler = Actor.current._scheduler
-      }
-      
-      Actor.current._scheduler << actor
+      actor = Actor.new(fiber, Actor.current.scheduler)
+      fiber.instance_eval { @actor = actor }      
+      Actor.current.scheduler << actor
       
       actor
     end
     
     # Obtain a handle to the current Actor
     def current
-      return Fiber.current._actor if Fiber.current._actor
+      return Fiber.current.actor if Fiber.current.actor
       
       actor = Actor.new
-      
-      Fiber.current.instance_eval { @_actor = actor }
-      actor.instance_eval { 
-        @_fiber = Fiber.current 
-        @_scheduler = Scheduler.new
-      }
+      Fiber.current.instance_eval { @actor = actor }
       
       actor
     end
@@ -83,7 +73,7 @@ class Actor
         raise ActorError, "receive must be called in the context of an Actor"
       end
 
-      current.__send__(:_mailbox).receive(&filter)
+      current.mailbox.receive(&filter)
     end
 
     # Look up an actor in the global dictionary
@@ -111,39 +101,41 @@ class Actor
     end
   end
   
-  def initialize
-    @_thread = Thread.current
-    @_dead = false
-    @_mailbox = Mailbox.new
-    @_dictionary = {}
+  def initialize(fiber = Fiber.current, scheduler = Scheduler.new)
+    @fiber = fiber
+    @scheduler = scheduler
+    @thread = Thread.current
+    @dead = false
+    @mailbox = Mailbox.new
+    @dictionary = {}
   end
   
   # Look up value in the actor's dictionary
   def [](key)
-    @_dictionary[key]
+    @dictionary[key]
   end
   
   # Store a value in the actor's dictionary
   def []=(key, value)
-    @_dictionary[key] = value
+    @dictionary[key] = value
   end
   
   # Delete a value from the actor's dictionary
   def delete(key, &block)
-    @_dictionary.delete(key, &block)
+    @dictionary.delete(key, &block)
   end
   
   # Iterate over values in the actor's dictionary
   def each(&block)
-    @_dictionary.each(&block)
+    @dictionary.each(&block)
   end
   
   # Is the current actor dead?
-  def dead?; @_dead; end
+  def dead?; @dead; end
   
   # Send a message to an actor
   def <<(message)
-    return "can't send messages to actors across threads" unless @_thread == Thread.current
+    return "can't send messages to actors across threads" unless @thread == Thread.current
         
     # Erlang discards messages sent to dead actors, and if Erlang does it,
     # it must be the right thing to do, right?  Hooray for the Erlang 
@@ -151,17 +143,11 @@ class Actor
     # from dead actors greatly overcomplicates overall error handling
     return message if dead?
     
-    @_mailbox << message    
-    @_scheduler << self
+    @mailbox << message    
+    @scheduler << self
     
     message
   end
 
   alias_method :send, :<<
-  
-  #########
-  protected
-  #########
-  
-  attr_reader :_mailbox
 end

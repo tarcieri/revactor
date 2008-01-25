@@ -83,11 +83,11 @@ class Actor
     def reschedule
       actor = Actor.current
     
-      if actor._scheduler.running? 
+      if actor.scheduler.running? 
         Fiber.yield
       else
         raise "no event sources available" unless Rev::Loop.default.has_active_watchers?
-        Fiber.new { actor._scheduler << actor }.resume
+        Fiber.new { actor.scheduler << actor }.resume
       end
     end
   
@@ -99,8 +99,8 @@ class Actor
       end
 
       def on_timer
-        @actor.instance_eval { @_mailbox.timed_out = true }
-        @actor._scheduler << @actor
+        @actor.mailbox.timed_out = true
+        @actor.scheduler << @actor
       end
     end
 
@@ -134,7 +134,7 @@ class Actor
           # No need to actually set a timer if the timeout is zero, 
           # just short-circuit waiting for one entirely...
           @timed_out = true
-          Actor.current._scheduler << Actor.current
+          Actor.current.scheduler << Actor.current
         end
       end
 

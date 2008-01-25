@@ -36,7 +36,7 @@ class Actor
       until @queue.empty? and not default_loop.has_active_watchers?
         @queue.each do |actor|
           begin
-            actor._fiber.resume
+            actor.fiber.resume
           rescue FiberError # Fiber may have died since being scheduled 
           end
         end
