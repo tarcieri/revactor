@@ -8,42 +8,23 @@ require File.dirname(__FILE__) + '/../lib/revactor/actor'
 
 describe Actor do
   describe "creation" do
-    it "creates a base Actor with Actor.start" do
-      Actor.start do
-        Fiber.current.should be_an_instance_of(Actor)
-      end
-    end
-  
-    it "allows creation of new Actors with Actor.new" do
-      Actor.new do
-        Fiber.current.should be_an_instance_of(Actor)
-      end
+    it "lazily creates Actor.current" do
+      Actor.current.should be_an_instance_of(Actor)
     end
     
     it "allows creation of new Actors with Actor.spawn" do
+      root = Actor.current
+      
       Actor.spawn do
-        Fiber.current.should be_an_instance_of(Actor)
+        Actor.current.should be_an_instance_of(Actor)
+        Actor.current.should_not eql(root)
       end
     end
     
     it "allows arguments to be passed when an Actor is created" do
-      [:new, :spawn].each do |meth|
-        Actor.send(meth, 1, 2, 3) do |foo, bar, baz|
-          [foo, bar, baz].should == [1, 2, 3]
-        end
+      Actor.spawn(1, 2, 3) do |foo, bar, baz|
+        [foo, bar, baz].should == [1, 2, 3]
       end
-    end
-  end
-  
-  describe "current" do
-    it "allows the current Actor to be retrieved" do
-      Actor.new do
-        Actor.current.should be_an_instance_of(Actor)
-      end
-    end
-  
-    it "disallows retrieving the current Actor unless the Actor environment is started" do
-      proc { Actor.current }.should raise_error(ActorError)
     end
   end
   
@@ -53,7 +34,7 @@ describe Actor do
     end
     
     it "returns the value of the matching filter action" do
-      actor = Actor.new do
+      actor = Actor.spawn do
         Actor.receive do |filter|
           filter.when(:foo) { |message| :bar }
         end.should == :bar
@@ -67,7 +48,7 @@ describe Actor do
     end
     
     it "filters messages with ===" do
-      actor = Actor.new do
+      actor = Actor.spawn do
         results = []
         3.times do
           results << Actor.receive do |filter|
@@ -85,7 +66,7 @@ describe Actor do
     end
         
     it "times out if a message isn't received after the specifed interval" do
-      actor = Actor.new do
+      actor = Actor.spawn do
         Actor.receive do |filter|
           filter.when(:foo) { :wrong }
           filter.after(0.01) { :right }
@@ -96,7 +77,7 @@ describe Actor do
     end
     
     it "matches any message with Object" do
-      actor = Actor.new do
+      actor = Actor.spawn do
         result = []
         3.times do
           result << Actor.receive do |filter|
@@ -114,7 +95,7 @@ describe Actor do
   end
   
   it "detects dead actors" do
-    actor = Actor.new do
+    actor = Actor.spawn do
       Actor.receive do |filter|
         filter.when(Object) {}
       end

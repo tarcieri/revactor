@@ -22,63 +22,43 @@ describe Revactor::TCP do
   end
   
   it "connects to remote servers" do
-    Actor.start do
-      sock = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
-      sock.should be_an_instance_of(Revactor::TCP::Socket)
-      @server.accept.should be_an_instance_of(TCPSocket)
-      
-      sock.close
-      @actor_run = true
-    end
+    sock = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
+    sock.should be_an_instance_of(Revactor::TCP::Socket)
+    @server.accept.should be_an_instance_of(TCPSocket)
     
-    @actor_run.should be_true
+    sock.close
   end
   
   it "listens for remote connections" do
-    @server.close # Don't use it for this one...
+    @server.close # Don't use their server for this one...
     
-    Actor.start do
-      server = Revactor::TCP.listen(TEST_HOST, RANDOM_PORT)
-      server.should be_an_instance_of(Revactor::TCP::Listener)
-      
-      s1 = TCPSocket.open(TEST_HOST, RANDOM_PORT)
-      s2 = server.accept
-      
-      server.close
-      s2.close
-      @actor_run = true
-    end
+    server = Revactor::TCP.listen(TEST_HOST, RANDOM_PORT)
+    server.should be_an_instance_of(Revactor::TCP::Listener)
     
-    @actor_run.should be_true
+    s1 = TCPSocket.open(TEST_HOST, RANDOM_PORT)
+    s2 = server.accept
+    
+    server.close
+    s2.close
   end
   
   it "reads data" do
-    Actor.start do
-      s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
-      s2 = @server.accept
-    
-      s2.write 'foobar'
-      s1.read(6).should == 'foobar'
-    
-      s1.close
-      @actor_run = true
-    end
+    s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
+    s2 = @server.accept
   
-    @actor_run.should be_true
+    s2.write 'foobar'
+    s1.read(6).should == 'foobar'
+  
+    s1.close
   end
 
   it "writes data" do
-    Actor.start do
-      s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
-      s2 = @server.accept
-      
-      s1.write 'foobar'
-      s2.read(6).should == 'foobar'
-      
-      s1.close
-      @actor_run = true
-    end
+    s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
+    s2 = @server.accept
     
-    @actor_run.should be_true  
+    s1.write 'foobar'
+    s2.read(6).should == 'foobar'
+    
+    s1.close
   end
 end
