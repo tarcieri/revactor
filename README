@@ -38,29 +38,14 @@ network servers painlessly while still guaranteeing correct operation:
 
 == Actors
 
-Actors add mailboxes to Ruby's Fiber mechanism.  They multitask cooperatively,
-meaning that many of the worries surrounding threaded programming disappear.
-Any sequence of operations you do in an Actor are executed in the order
-you specify.  You don't (generally) have to worry about another Actor doing 
-something in the background as you frob a particular data structure.
+Actors are lightweight concurrency primitives which communicate using message
+passing.  They multitask cooperatively, meaning that many of the worries 
+surrounding threaded programming disappear.  Any sequence of operations you do 
+in an Actor are executed in the order you specify.  You don't (generally) have 
+to worry about another Actor doing something in the background as you frob a 
+particular data structure.
 
-Unfortunately, in Ruby 1.9, Actors are not first-class citizens.  This means
-you will need to jump from the non-Actor world to the Actor world before you
-can do anything with Actors.  This is accomplished by running Actor.start:
-
-  # Not in Actor world
-  Actor.start do
-    # In Actor world, yay
-    ...
-  end
-  # Won't get called until all Actors have processes their entire mailbox
-  # and aren't waiting for any events.
-
-Ideally, what you place in Actor.start is a small startup routine which
-spawns all the Actors your application needs to get started and nothing else.
-
-Once you're in Actor world, you can begin making Actors and sending them
-events.  You create Actors with Actor.spawn:
+Actors are created by calling Actor.spawn:
 
   myactor = Actor.spawn { puts "I'm an Actor!" }
 
@@ -83,6 +68,9 @@ Calling:
 prints:
 
   "Yay, I got a dog!"
+
+You can retrieve the current Actor by calling Actor.current.  There will always 
+be a default Actor available for every Thread.
 
 == Mailboxes
 

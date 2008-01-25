@@ -60,7 +60,7 @@ class Actor::Mailbox
       action ||= @timeout_action if @timed_out
 
       # If no matching action is found, yield until we get another message
-      Actor.yield unless action
+      reschedule unless action
     end
 
     if @timer
@@ -74,7 +74,22 @@ class Actor::Mailbox
     # Otherwise we matched a message, so process it with the action      
     return action.(@queue.delete_at matched_index)
   end
-
+  
+  #######
+  private
+  #######
+  
+  def reschedule
+    actor = Actor.current
+    
+    if actor._scheduler.running? 
+      Fiber.yield
+    else
+      raise "no event sources available" unless Rev::Loop.default.has_active_watchers?
+      Fiber.new { actor._scheduler << actor }.resume
+    end
+  end
+  
   # Timeout class, used to implement receive timeouts
   class Timer < Rev::TimerWatcher
     def initialize(timeout, actor)
@@ -84,7 +99,7 @@ class Actor::Mailbox
 
     def on_timer
       @actor.instance_eval { @_mailbox.timed_out = true }
-      Scheduler << @actor
+      @actor._scheduler << @actor
     end
   end
 
@@ -118,7 +133,7 @@ class Actor::Mailbox
         # No need to actually set a timer if the timeout is zero, 
         # just short-circuit waiting for one entirely...
         @timed_out = true
-        Scheduler << self
+        Actor.current._scheduler << Actor.current
       end
     end
 

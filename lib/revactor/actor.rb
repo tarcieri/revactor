@@ -10,6 +10,11 @@ require 'fiber'
 # Raised whenever any Actor-specific problems occur
 class DeadActorError < StandardError; end
 
+# Monkeypatch Fiber to include an accessor to its current Actor
+class Fiber
+  attr_reader :_actor
+end
+
 # Actors are lightweight concurrency primitives which communiucate via message
 # passing.  Each actor has a mailbox which it scans for matching messages.
 # An actor sleeps until it receives a message, at which time it scans messages
@@ -21,40 +26,48 @@ class DeadActorError < StandardError; end
 # should be possible to run programs written using Revactor to on top of other
 # Actor implementations.
 #
-class Actor < Fiber
+class Actor
+  attr_reader :_fiber
+  attr_reader :_scheduler
+  
   @@registered = {}
 
   class << self
     # Create a new Actor with the given block and arguments
-    def new(*args, &block)
+    def spawn(*args, &block)
       raise ArgumentError, "no block given" unless block
-      actor = super() do 
+
+      actor = Actor.new
+      
+      fiber = Fiber.new do 
         block.call(*args)
-        Actor.current.instance_eval { @_dead = true }
+        actor.instance_eval { @_dead = true }
       end
-
-      # For whatever reason #initialize is never called in subclasses of Fiber
-      actor.instance_eval do 
-        @_dead = false
-        @_mailbox = Mailbox.new
-        @_dictionary = {}
-      end
-
-      Scheduler << actor
+      
+      fiber.instance_eval { @_actor = actor }
+      actor.instance_eval { 
+        @_fiber = fiber
+        @_scheduler = Actor.current._scheduler
+      }
+      
+      Actor.current._scheduler << actor
+      
       actor
     end
     
-    alias_method :spawn, :new
-    
-    # This will be defined differently in the future, but is just aliased now 
-    alias_method :start, :new
-    
     # Obtain a handle to the current Actor
     def current
-      actor = super
-      raise ActorError, "current fiber is not an actor" unless actor.is_a? Actor
+      return Fiber.current._actor if Fiber.current._actor
       
-      actor 
+      actor = Actor.new
+      
+      Fiber.current.instance_eval { @_actor = actor }
+      actor.instance_eval { 
+        @_fiber = Fiber.current 
+        @_scheduler = Scheduler.new
+      }
+      
+      actor
     end
     
     # Wait for messages matching a given filter.  The filter object is yielded
@@ -98,6 +111,13 @@ class Actor < Fiber
     end
   end
   
+  def initialize
+    @_thread = Thread.current
+    @_dead = false
+    @_mailbox = Mailbox.new
+    @_dictionary = {}
+  end
+  
   # Look up value in the actor's dictionary
   def [](key)
     @_dictionary[key]
@@ -123,14 +143,17 @@ class Actor < Fiber
   
   # Send a message to an actor
   def <<(message)
+    return "can't send messages to actors across threads" unless @_thread == Thread.current
+        
     # Erlang discards messages sent to dead actors, and if Erlang does it,
     # it must be the right thing to do, right?  Hooray for the Erlang 
     # cargo cult!  I think they do this because dealing with errors raised
     # from dead actors greatly overcomplicates overall error handling
     return message if dead?
     
-    @_mailbox << message
-    Scheduler << self
+    @_mailbox << message    
+    @_scheduler << self
+    
     message
   end
 

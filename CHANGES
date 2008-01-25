@@ -1,5 +1,8 @@
 0.1.1:
 
+* Eliminate Actor.start: now there's a current Actor by default in every thread.
+  This paves the way towards thread safety.
+
 * Rename Revactor::Server to Revactor::Delegator and make more like delegator.rb
 
 * Factor apart actor.rb into scheduler.rb and mailbox.rb
