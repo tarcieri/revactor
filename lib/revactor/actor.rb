@@ -45,10 +45,10 @@ class Actor
       end
       
       actor = Actor.new(fiber)
-      fiber.instance_eval { 
+      fiber.instance_eval do
         @actor = actor
         @scheduler = actor.scheduler
-      }
+      end
       
       Actor.scheduler << actor
       actor

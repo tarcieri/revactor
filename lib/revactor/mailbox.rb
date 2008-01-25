@@ -134,7 +134,7 @@ class Actor
           # No need to actually set a timer if the timeout is zero, 
           # just short-circuit waiting for one entirely...
           @timed_out = true
-          Actor.current.scheduler << Actor.current
+          Actor.scheduler << Actor.current
         end
       end
 
