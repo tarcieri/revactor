@@ -5,15 +5,24 @@
 #++
 
 require File.dirname(__FILE__) + '/../revactor'
+require 'thread'
 require 'fiber'
 
 # Raised whenever any Actor-specific problems occur
 class DeadActorError < StandardError; end
 
-# Monkeypatch Fiber to include an accessor to its current Actor
+# Monkeypatch Thread to include a method for obtaining the current Scheduler
+class Thread
+  def _revactor_scheduler
+    @_revactor_scheduler ||= Actor::Scheduler.new
+  end
+end
+
+# Monkeypatch Fiber to include a method for obtaining the current Actor
 class Fiber
-  attr_reader :actor
-  attr_reader :scheduler
+  def _actor
+    @_actor ||= Actor.new
+  end
 end
 
 # Actors are lightweight concurrency primitives which communiucate via message
@@ -45,10 +54,7 @@ class Actor
       end
       
       actor = Actor.new(fiber)
-      fiber.instance_eval do
-        @actor = actor
-        @scheduler = actor.scheduler
-      end
+      fiber.instance_eval { @_actor = actor }
       
       Actor.scheduler << actor
       actor
@@ -56,16 +62,12 @@ class Actor
     
     # Obtain a handle to the current Actor
     def current
-      return Fiber.current.actor if Fiber.current.actor
-      
-      actor = Actor.new
-      Fiber.current.instance_eval { @actor = actor }
-      actor
+      Fiber.current._actor
     end
     
     # Obtain a handle to the current Scheduler
     def scheduler
-      Fiber.current.scheduler or Fiber.current.instance_eval { @scheduler = Scheduler.new }
+      Thread.current._revactor_scheduler
     end
     
     # Reschedule the current actor for execution later
@@ -112,20 +114,21 @@ class Actor
     def delete(key, &block)
       @@registered.delete(key, &block)
     end
-
-    # Iterate over the actors in the global dictionary
-    def each(&block)
-      @@registered.each(&block)
-    end
   end
   
   def initialize(fiber = Fiber.current)
+    raise ArgumentError, "use Actor.spawn to create actors" if block_given?
+    
     @fiber = fiber
     @scheduler = Actor.scheduler
     @thread = Thread.current
-    @dead = false
     @mailbox = Mailbox.new
+    @dead = false
     @dictionary = {}
+  end
+  
+  def inspect
+    "#<#{self.class}:0x#{object_id.to_s(16)}>"
   end
   
   # Look up value in the actor's dictionary
@@ -141,11 +144,6 @@ class Actor
   # Delete a value from the actor's dictionary
   def delete(key, &block)
     @dictionary.delete(key, &block)
-  end
-  
-  # Iterate over values in the actor's dictionary
-  def each(&block)
-    @dictionary.each(&block)
   end
   
   # Is the current actor dead?

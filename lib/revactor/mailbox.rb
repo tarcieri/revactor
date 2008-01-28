@@ -93,6 +93,7 @@ class Actor
       end
 
       def on_timer
+        detach
         @actor.mailbox.timed_out = true
         @actor.scheduler << @actor
       end

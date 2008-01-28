@@ -31,15 +31,15 @@ module Revactor
       socket.attach Rev::Loop.default
 
       Actor.receive do |filter|
-        filter.when(Case[Object, socket]) do |message|
-          case message[0]
+        filter.when(Case[Object, socket]) do |message, _|
+          case message
           when :tcp_connected
             return socket
           when :tcp_connect_failed
             raise ConnectError, "connection refused"
           when :tcp_resolve_failed
             raise ResolveError, "couldn't resolve #{host}"
-          else raise "unexpected message for #{socket.inspect}: #{message.first}"
+          else raise "unexpected message for #{socket.inspect}: #{message}"
           end              
         end
 
@@ -100,6 +100,10 @@ module Revactor
         
         @receiver = @controller
         @read_buffer = Rev::Buffer.new
+      end
+      
+      def inspect
+        "#<#{self.class}:0x#{object_id.to_s(16)} #{@remote_host}:#{@remote_port}>"
       end
       
       # Enable or disable active mode data reception.  State can be any
@@ -340,6 +344,10 @@ module Revactor
         @filterset = options[:filter]
         
         @accepting = false
+      end
+      
+      def inspect
+        "#<#{self.class}:0x#{object_id.to_s(16)}>"
       end
       
       # Change the default active setting for newly accepted connections

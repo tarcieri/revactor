@@ -26,7 +26,9 @@ class Actor
       
       unless @running
         # Persist the fiber the scheduler runs in
-        @fiber ||= Fiber.new { loop { run; Fiber.yield } }
+        @fiber ||= Fiber.new do 
+          loop { run; Fiber.yield }
+        end
         
         # Resume the scheduler
         @fiber.resume
