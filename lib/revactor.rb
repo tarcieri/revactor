@@ -4,7 +4,6 @@
 # See file LICENSE for details
 #++
 
-require 'rubygems'
 require 'rev'
 require 'case'
 
@@ -22,7 +21,7 @@ end
 T = Tuple unless defined? T
 
 module Revactor
-  Revactor::VERSION = '0.1.1' unless defined? Revactor::VERSION
+  Revactor::VERSION = '0.1.2' unless defined? Revactor::VERSION
   def self.version() VERSION end
 end
 
