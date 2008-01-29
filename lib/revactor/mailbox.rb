@@ -57,23 +57,34 @@ class Actor
           break
         end
 
-        # If we've timed out, run the timeout action unless we found another
-        action ||= @timeout_action if @timed_out
+        # Ignore timeouts if we've matched a message
+        if action
+          @timed_out = false
+          break
+        end
+        
+        # Otherwise run the timeout action
+        action = @timeout_action if @timed_out
 
         # If no matching action is found, reschedule until we get another message
         Actor.reschedule unless action
       end
 
+      @timeout_action = nil
+      
       if @timer
         @timer.detach if @timer.attached?
         @timer = nil
       end
     
       # If we encountered a timeout, call the action directly
-      return action.call if @timed_out
+      if @timed_out
+        @timed_out = false
+        return action.call
+      end
     
       # Otherwise we matched a message, so process it with the action      
-      return action.(@queue.delete_at matched_index)
+      action.(@queue.delete_at matched_index)
     end
     
     # Is the mailbox empty?
@@ -87,9 +98,9 @@ class Actor
   
     # Timeout class, used to implement receive timeouts
     class Timer < Rev::TimerWatcher
-      def initialize(timeout, actor)
+      def initialize(seconds, actor)
         @actor = actor
-        super(timeout)
+        super(seconds)
       end
 
       def on_timer
@@ -116,19 +127,19 @@ class Actor
 
       # Provide a timeout (in seconds, can be a Float) to wait for matching
       # messages.  If the timeout elapses, the given block is called.
-      def after(timeout, &action)
+      def after(seconds, &action)
         raise ArgumentError, "timeout already specified" if @mailbox.timer
-        raise ArgumentError, "must be zero or positive" if timeout < 0
+        raise ArgumentError, "must be zero or positive" if seconds < 0
       
         # Don't explicitly require an action to be specified for a timeout
         @mailbox.timeout_action = action || proc {}
       
-        if timeout > 0
-          @mailbox.timer = Timer.new(timeout, Actor.current).attach(Rev::Loop.default)
+        if seconds > 0
+          @mailbox.timer = Timer.new(seconds, Actor.current).attach(Rev::Loop.default)
         else
           # No need to actually set a timer if the timeout is zero, 
           # just short-circuit waiting for one entirely...
-          @timed_out = true
+          @mailbox.timed_out = true
           Actor.scheduler << Actor.current
         end
       end

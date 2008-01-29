@@ -1,5 +1,8 @@
 0.1.1:
 
+* Eliminate Actor::Scheduler singleton and replace with thread-specific
+  scheduler objects.
+
 * Eliminate Actor.start: now there's a current Actor by default in every thread.
   This paves the way towards thread safety.
 
@@ -14,7 +17,8 @@
 
 * Include Revactor::VERSION variable
 
-* Mailbox filters can now include only a timeout (i.e. sleep)
+* Mailbox filters can now include only a timeout (i.e. sleep).  Added an
+  Actor.sleep shortcut to this behavior.
 
 0.1.0:
 

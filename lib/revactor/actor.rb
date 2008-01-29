@@ -8,9 +8,6 @@ require File.dirname(__FILE__) + '/../revactor'
 require 'thread'
 require 'fiber'
 
-# Raised whenever any Actor-specific problems occur
-class DeadActorError < StandardError; end
-
 # Monkeypatch Thread to include a method for obtaining the current Scheduler
 class Thread
   def _revactor_scheduler
