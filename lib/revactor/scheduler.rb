@@ -46,7 +46,12 @@ class Actor
         @queue.each do |actor|
           begin
             actor.fiber.resume
-          rescue FiberError # Fiber may have died since being scheduled 
+            handle_exception(actor, :normal) if actor.dead?
+          rescue FiberError
+            # Handle Actors that died after being scheduled
+            handle_exception(actor, :normal)
+          rescue => ex
+            handle_exception(actor, ex)
           end
         end
       
@@ -60,6 +65,23 @@ class Actor
     # Is the scheduler running?
     def running?
       @running
+    end
+    
+    #########
+    protected
+    #########
+    
+    def handle_exception(actor, ex)
+      actor.instance_eval do
+        # Mark Actor as dead
+        @dead = true
+        
+        # Notify all linked Actors of the exception
+        @links.each do |link|
+          link.__send__(:event, T[:exit, actor, ex])
+          Actor.scheduler << link
+        end
+      end
     end
   end
 end

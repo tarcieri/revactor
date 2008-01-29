@@ -63,7 +63,7 @@ class Revactor::Delegator
     begin
       result = @obj.__send__(meth, *args, &block)
       from << T[:call_reply, Actor.current, result]
-    rescue Exception => ex
+    rescue => ex
       from << T[:call_error, Actor.current, ex]
     end
   end

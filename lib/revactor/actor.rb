@@ -22,6 +22,9 @@ class Fiber
   end
 end
 
+# Error raised when attempting to link to dead Actors
+class DeadActorError < StandardError; end
+
 # Actors are lightweight concurrency primitives which communiucate via message
 # passing.  Each actor has a mailbox which it scans for matching messages.
 # An actor sleeps until it receives a message, at which time it scans messages
@@ -45,15 +48,18 @@ class Actor
     def spawn(*args, &block)
       raise ArgumentError, "no block given" unless block
       
-      fiber = Fiber.new do
-        block.call(*args)
-        Actor.current.instance_eval { @dead = true }
-      end
+      actor = _spawn(*args, &block)
+      scheduler << actor
+      actor
+    end
+    
+    # Spawn an Actor and immediately link it to the current one
+    def spawn_link(*args, &block)
+      raise ArgumentError, "no block given" unless block
       
-      actor = Actor.new(fiber)
-      fiber.instance_eval { @_actor = actor }
-      
-      Actor.scheduler << actor
+      actor = _spawn(*args, &block)
+      current.link actor
+      scheduler << actor
       actor
     end
     
@@ -72,13 +78,15 @@ class Actor
       if scheduler.running? 
         Fiber.yield
       else
-        Actor.scheduler << Actor.current
+        scheduler << current
       end
+      
+      current.__send__(:process_events)
     end
     
     # Sleep for the specified number of seconds
     def sleep(seconds)
-      Actor.receive { |filter| filter.after(seconds) }
+      receive { |filter| filter.after(seconds) }
     end
     
     # Wait for messages matching a given filter.  The filter object is yielded
@@ -111,6 +119,20 @@ class Actor
     def delete(key, &block)
       @@registered.delete(key, &block)
     end
+    
+    #########
+    protected
+    #########
+    
+    def _spawn(*args, &block)
+      fiber = Fiber.new do
+        block.call(*args)
+        current.instance_eval { @dead = true }
+      end
+      
+      actor = Actor.new(fiber)
+      fiber.instance_eval { @_actor = actor }
+    end
   end
   
   def initialize(fiber = Fiber.current)
@@ -120,13 +142,14 @@ class Actor
     @scheduler = Actor.scheduler
     @thread = Thread.current
     @mailbox = Mailbox.new
+    @links = []
+    @events = []
+    @trap_exit = false
     @dead = false
     @dictionary = {}
   end
   
-  def inspect
-    "#<#{self.class}:0x#{object_id.to_s(16)}>"
-  end
+  alias_method :inspect, :to_s
   
   # Look up value in the actor's dictionary
   def [](key)
@@ -163,4 +186,84 @@ class Actor
   end
 
   alias_method :send, :<<
+  
+  # Establish a bidirectional link to the given Actor and notify it of any
+  # system events which occur in this Actor (namely exits due to exceptions)
+  def link(actor)
+    actor.notify_link self
+    self.notify_link actor
+  end
+  
+  # Unestablish a link with the given actor
+  def unlink(actor)
+    actor.notify_unlink self
+    self.notify_unlink actor
+  end
+  
+  # Notify this actor that it's now linked to the given one
+  def notify_link(actor)
+    raise ArgumentError, "can only link to Actors" unless actor.is_a? Actor
+    
+    # Don't allow linking to dead actors
+    raise DeadActorError, "actor is dead" if actor.dead?
+    
+    # Ignore circular links
+    return true if actor == self
+    
+    # Ignore duplicate links
+    return true if @links.include? actor
+    
+    @links << actor
+    true
+  end
+  
+  # Notify this actor that it's now unlinked from the given one
+  def notify_unlink(actor)
+    @links.delete(actor)
+    true
+  end
+  
+  # Actors trapping exit do not die when an error occurs in an Actor they
+  # are linked to.  Instead the exit message is sent to their regular
+  # mailbox in the form [:exit, actor, reason].  This allows certain
+  # Actors to supervise sets of others and restart them in the event
+  # of an error.
+  def trap_exit=(value)
+    raise ArgumentError, "must be true or false" unless value == true or value == false
+    @trap_exit = value
+  end
+  
+  # Is the Actor trapping exit?
+  def trap_exit?
+    @trap_exit
+  end
+  
+  #########
+  protected
+  #########
+  
+  # Add an event to the Actor's system event queue
+  def event(event)
+    @events << event
+  end
+  
+  # Process the Actor's system event queue
+  def process_events
+    @events.each do |event|
+      type, *operands = event
+      case type
+      when :exit
+        actor, ex = operands
+        notify_unlink actor
+        
+        if @trap_exit
+          self << event
+        else 
+          raise ex unless ex == :normal
+        end
+      end
+    end
+    
+    @events.clear
+  end
 end

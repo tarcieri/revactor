@@ -1,5 +1,9 @@
 0.1.2:
 
+* Fix problems with Actor#inspect reporting the wrong object ID
+
+* Initial linking implementation
+
 * Fix problems with zero-length timers
 
 0.1.1:
