@@ -1,5 +1,4 @@
 require File.dirname(__FILE__) + '/../revactor'
-require 'rubygems'
 require 'mongrel'
 
 class Revactor::TCP::Socket

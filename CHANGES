@@ -1,3 +1,7 @@
+0.1.2:
+
+* Fix problems with zero-length timers
+
 0.1.1:
 
 * Eliminate Actor::Scheduler singleton and replace with thread-specific

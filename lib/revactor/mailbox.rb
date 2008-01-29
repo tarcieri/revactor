@@ -133,15 +133,7 @@ class Actor
       
         # Don't explicitly require an action to be specified for a timeout
         @mailbox.timeout_action = action || proc {}
-      
-        if seconds > 0
-          @mailbox.timer = Timer.new(seconds, Actor.current).attach(Rev::Loop.default)
-        else
-          # No need to actually set a timer if the timeout is zero, 
-          # just short-circuit waiting for one entirely...
-          @mailbox.timed_out = true
-          Actor.scheduler << Actor.current
-        end
+        @mailbox.timer = Timer.new(seconds, Actor.current).attach(Rev::Loop.default)
       end
 
       # Match a message using the filter
