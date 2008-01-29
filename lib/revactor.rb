@@ -4,7 +4,6 @@
 # See file LICENSE for details
 #++
 
-require 'rubygems'
 require 'rev'
 require 'case'
 

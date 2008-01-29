@@ -5,7 +5,7 @@ GEMSPEC = Gem::Specification.new do |s|
   s.version = "0.1.1"
   s.authors = "Tony Arcieri"
   s.email = "tony@medioh.com"
-  s.date = "2008-1-15"
+  s.date = "2008-1-28"
   s.summary = "Revactor is an Actor implementation for writing high performance concurrent programs"
   s.platform = Gem::Platform::RUBY
   s.required_ruby_version = '>= 1.9.0'
