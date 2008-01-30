@@ -63,6 +63,16 @@ class Actor
       actor
     end
     
+    # Link the current Actor to another one
+    def link(actor)
+      current.link actor
+    end
+    
+    # Unlink the current Actor from another one
+    def unlink(actor)
+      current.unlink actor
+    end
+    
     # Obtain a handle to the current Actor
     def current
       Fiber.current._actor

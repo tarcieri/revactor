@@ -122,6 +122,72 @@ Actor.receive returns whatever value the evaluated action returned.  This means
 you don't have to depend on side effects to extract values from receive, 
 instead you can just interpret its return value.
 
+== Handling Exceptions
+
+In a concurrent environment, dealing with exceptions can be incredibly 
+confusing.  By default, any unhandled exceptions in an Actor are logged
+and any remaining Actors continue their normal operation.  However, Actors
+also provide a powerful tool for implementing fault-tolerant systems that
+can gracefully recover from exceptions.
+
+Actors can be linked to each other:  
+
+  another_actor = Actor.spawn { puts "I'm an Actor!" }
+  Actor.link(another_actor)
+
+This can also be done as a single "atomic" operation:
+
+  actor = Actor.spawn_link { puts "I'm an Actor!" }
+
+When Actors are linked, any exceptions which occur in one will be raised in the 
+other, and vice versa.  This means if one Actor dies, any Actors it's linked to 
+will also die.  Furthermore, any Actors those are linked to also die.  This 
+occurs until the entire graph of linked Actors has been walked.
+
+In this way, you can organize Actors into large groups which all die 
+simultaneously whenever an error occurs in one.  This means that if an error
+occurs and one Actor dies, you're not left with an interdependent network of
+Actors which are in an inconsistent state.  You can kill off the whole group
+and start over fresh.
+
+But if an Actor crashing kills off every Actor it's linked to, what Actor will
+be left to restart the whole group?  The answer is that an Actor can trap
+exit events from another and receive them as messages:
+
+  Actor.current.trap_exit = true
+  actor = Actor.spawn_link { puts "I'm an Actor!" }
+  Actor.receive do |filter|
+    filter.when(Case[:exit, actor, Object]) { |msg| p msg }
+  end
+
+will print something to the effect of:
+
+  I'm an Actor!
+  [:exit, #<Actor:0x54ad6c>, :normal]
+
+This message tells us the linked Actor exited normally.  But what if it raises
+an exception instead?
+
+  Actor.current.trap_exit = true
+  actor = Actor.spawn_link { raise "I fail!" }
+  Actor.receive do |filter|
+    filter.when(Case[:exit, actor, Object]) { |msg| p msg }
+  end
+
+We now get the entire exception, captured and delivered as a message:
+
+  [:exit, #<Actor:0x53ec24>, #<RuntimeError: I fail!>]
+
+If the Actor that died were linked to any others which were not trapping exits,
+those would all die and the ones trapping exits would remain.  This allows us
+to implement supervisors which trap exits and respond to exit messages.  The
+supervisor's job is to start an Actor initially, and if it fails log the error
+then restart it.
+
+In this way Actors can be used to build complex concurrent systems which fail
+gracefully and can respond to errors by restarting interdependent components
+of the system en masse.
+
 == Revactor::TCP
 
 The TCP module lets you perform TCP operations on top of the Actor model.  For
