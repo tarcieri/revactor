@@ -1,3 +1,12 @@
+0.1.3:
+
+* Omit pointless syntactic sugar in the scheduler loop for a 2.5% performance
+  boost.  loop { ... } bad, while true good.
+
+* Fix bug with the toplevel Actor never resuming if a newly spawend Actor
+  registeres interest in Rev events.  Toplevel Actor is now rescheduled if
+  the event loop isn't running.
+
 0.1.2:
 
 * Change Revactor::TCP::Socket#active to #active? (same for Listener)

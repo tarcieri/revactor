@@ -25,9 +25,14 @@ class Actor
       @queue << actor unless @queue.last == actor
       
       unless @running
+        # Reschedule the current Actor for execution
+        @queue << Actor.current
+
         # Persist the fiber the scheduler runs in
         @fiber ||= Fiber.new do 
-          loop { run; Fiber.yield }
+          while true
+            run; Fiber.yield
+          end
         end
         
         # Resume the scheduler
