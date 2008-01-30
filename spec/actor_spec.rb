@@ -113,7 +113,7 @@ describe Actor do
         actor = Actor.spawn_link {}
         Actor.receive do |m|
           m.when(Case[:exit, actor, Object]) { |_, _, reason| reason }
-        end.should == :normal
+        end.should be_nil
       end
     end
     

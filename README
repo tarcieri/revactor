@@ -163,10 +163,14 @@ exit events from another and receive them as messages:
 will print something to the effect of:
 
   I'm an Actor!
-  [:exit, #<Actor:0x54ad6c>, :normal]
+  [:exit, #<Actor:0x54ad6c>, nil]
 
-This message tells us the linked Actor exited normally.  But what if it raises
-an exception instead?
+We were sent a message in the form:
+
+  [:exit, actor, reason]
+
+and in this case reason was nil, which informs us the Actor exited normally.
+But what if it dies due to an exception instead?
 
   Actor.current.trap_exit = true
   actor = Actor.spawn_link { raise "I fail!" }

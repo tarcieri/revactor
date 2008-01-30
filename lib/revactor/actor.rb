@@ -268,8 +268,8 @@ class Actor
         
         if @trap_exit
           self << event
-        else
-          raise ex unless ex == :normal
+        elsif ex
+          raise ex
         end
       end
     end
