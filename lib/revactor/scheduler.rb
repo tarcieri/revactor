@@ -76,12 +76,21 @@ class Actor
         # Mark Actor as dead
         @dead = true
         
-        # Notify all linked Actors of the exception
-        @links.each do |link|
-          link.__send__(:event, T[:exit, actor, ex])
-          Actor.scheduler << link
+        if @links.empty?
+          Actor.scheduler.__send__(:log_exception, ex) unless ex == :normal
+        else
+          # Notify all linked Actors of the exception
+          @links.each do |link|
+            link.__send__(:event, T[:exit, actor, ex])
+            Actor.scheduler << link
+          end
         end
       end
+    end
+    
+    def log_exception(ex)
+      # FIXME this should go to a real logger
+      STDERR.puts "#{ex.class}: #{[ex, *ex.backtrace].join("\n\t")}"
     end
   end
 end

@@ -63,7 +63,6 @@ module Revactor
     # TCP socket class, returned by Revactor::TCP.connect and 
     # Revactor::TCP::Listener#accept
     class Socket < Rev::TCPSocket
-      attr_reader :active
       attr_reader :controller
 
       class << self
@@ -133,6 +132,9 @@ module Revactor
         
         @active = state
       end
+      
+      # Is the socket in active mode?
+      def active?; @active; end
       
       # Set the controlling actor
       def controller=(controller)
@@ -323,7 +325,6 @@ module Revactor
 
     # TCP Listener returned from Revactor::TCP.listen
     class Listener < Rev::TCPListener
-      attr_reader :active
       attr_reader :controller
    
       # Listen on the specified address and port.  Accepts the following options:
@@ -358,6 +359,9 @@ module Revactor
       
         @active = state
       end
+      
+      # Will newly accepted connections be active?
+      def active?; @active; end
       
       # Change the default controller for newly accepted connections
       def controller=(controller)

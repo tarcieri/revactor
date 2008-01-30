@@ -1,5 +1,7 @@
 0.1.2:
 
+* Change Revactor::TCP::Socket#active to #active? (same for Listener)
+
 * Fix problems with Actor#inspect reporting the wrong object ID
 
 * Initial linking implementation
