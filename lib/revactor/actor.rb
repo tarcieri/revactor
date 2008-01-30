@@ -233,6 +233,11 @@ class Actor
     true
   end
   
+  # Notify this actor that one of the Actors it's linked to has exited
+  def notify_exited(actor, reason)
+    @events << T[:exit, actor, reason]
+  end
+  
   # Actors trapping exit do not die when an error occurs in an Actor they
   # are linked to.  Instead the exit message is sent to their regular
   # mailbox in the form [:exit, actor, reason].  This allows certain
@@ -252,11 +257,6 @@ class Actor
   protected
   #########
   
-  # Add an event to the Actor's system event queue
-  def event(event)
-    @events << event
-  end
-  
   # Process the Actor's system event queue
   def process_events
     @events.each do |event|
@@ -268,7 +268,7 @@ class Actor
         
         if @trap_exit
           self << event
-        else 
+        else
           raise ex unless ex == :normal
         end
       end

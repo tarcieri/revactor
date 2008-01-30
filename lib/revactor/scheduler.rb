@@ -81,7 +81,7 @@ class Actor
         else
           # Notify all linked Actors of the exception
           @links.each do |link|
-            link.__send__(:event, T[:exit, actor, ex])
+            link.notify_exited(actor, ex)
             Actor.scheduler << link
           end
         end

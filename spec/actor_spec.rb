@@ -94,6 +94,42 @@ describe Actor do
     end
   end
   
+  describe "linking" do
+    it "forwards exceptions to linked Actors" do
+      Actor.spawn do
+        actor = Actor.spawn_link do
+          Actor.receive do |m|
+            m.when(:die) { raise 'dying' }
+          end
+        end
+    
+        proc { actor << :die; Actor.sleep 0 }.should raise_error('dying')
+      end
+    end
+    
+    it "sends normal exit messages to linked Actors which are trapping exit" do
+      Actor.spawn do
+        Actor.current.trap_exit = true
+        actor = Actor.spawn_link {}
+        Actor.receive do |m|
+          m.when(Case[:exit, actor, Object]) { |_, _, reason| reason }
+        end.should == :normal
+      end
+    end
+    
+    it "delivers exceptions to linked Actors which are trapping exit" do
+      error = RuntimeError.new("I fail!")
+      
+      Actor.spawn do
+        Actor.current.trap_exit = true
+        actor = Actor.spawn_link { raise error }
+        Actor.receive do |m|
+          m.when(Case[:exit, actor, Object]) { |_, _, reason| reason }
+        end.should == error
+      end
+    end
+  end
+  
   it "detects dead actors" do
     actor = Actor.spawn do
       Actor.receive do |filter|
