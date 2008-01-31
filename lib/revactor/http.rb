@@ -153,26 +153,22 @@ module Revactor
     end
     
     def on_body_data(data)
-      puts "on_body_data"
       disable if enabled? and not @active 
       @receiver << T[:http, self, data]
     end
     
     def on_request_complete
-      puts "on_request_complete"
-      close
       @receiver << T[:http_request_complete, self]
+      close
     end
     
     def on_close
-      puts "on_close"
       @receiver << T[:http_closed, self]
     end
     
     def on_error(reason)
-      puts "on_error"
-      close
       @receiver << T[:http_error, self, reason]
+      close
     end
   end
   
