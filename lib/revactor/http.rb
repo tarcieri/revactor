@@ -218,6 +218,11 @@ module Revactor
         end
         
         filter.when(Case[:http_request_complete, @client]) do
+          # Consume the :http_closed message
+          Actor.receive do |filter| 
+            filter.when(Case[:http_closed, @client]) {}
+          end
+          
           return nil
         end
         
