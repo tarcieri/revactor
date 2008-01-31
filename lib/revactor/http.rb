@@ -210,7 +210,7 @@ module Revactor
     # Incrementally read the response body
     def read_body
       @client.controller = Actor.current
-      @client.enable unless @client.enabled?
+      @client.enable if @client.attached? and not @client.enabled?
       
       Actor.receive do |filter|
         filter.when(Case[:http, @client, Object]) do |_, _, data|
@@ -234,6 +234,26 @@ module Revactor
           raise HttpClientError, "read timed out"
         end
       end
+    end
+    
+    # Consume the entire response body and return a StringIO
+    def body
+      response = ""
+      
+      begin
+        while (data = read_body)
+          response << data
+        end
+      rescue EOFError => ex
+        # If we didn't get a Content-Length and encoding isn't chunked
+        # we have to depend on the socket closing to detect end-of-body
+        # Otherwise the EOFError was unexpected and should be raised
+        unless (content_length.nil? or content_length.zero?) and not chunked_encoding?
+          raise ex 
+        end
+      end
+      
+      response
     end
   end
 end
