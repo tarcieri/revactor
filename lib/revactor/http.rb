@@ -16,26 +16,29 @@ module Revactor
     # Default timeout for HTTP requests (until the response header is received)
     REQUEST_TIMEOUT = 60
     
+    # Read timeout for responses from the server
+    READ_TIMEOUT = 30
+    
     # Maximum number of HTTP redirects to follow
     MAX_REDIRECTS = 10
     
     class << self
-      def connect(host, port = 80, options = {})
-        options[:controller] ||= Actor.current
-        
+      def connect(host, port = 80)        
         client = super
+        client.instance_eval { @receiver = Actor.current }
         client.attach Rev::Loop.default
       
         Actor.receive do |filter|
           filter.when(Case[Object, client]) do |message, _|
             case message
             when :http_connected
+              client.disable
               return client
             when :http_connect_failed
               raise TCP::ConnectError, "connection refused"
             when :http_resolve_failed
               raise TCP::ResolveError, "couldn't resolve #{host}"
-            else raise "unexpected message for #{client.inspect}: #{message}"
+            else raise "unexpected message for #{client.inspect}: #{message.inspect}"
             end              
           end
 
@@ -53,7 +56,7 @@ module Revactor
           raise URI::InvalidURIError, "invalid HTTP URI: #{uri}" unless uri.is_a? URI::HTTP
           uri.path = "/" if uri.path.empty?
         
-          client = connect(uri.host, uri.port, options)
+          client = connect(uri.host, uri.port)
           response = client.request(method, uri.path, options, &block)
           
           return response unless response.status == 301 or response.status == 302
@@ -72,16 +75,38 @@ module Revactor
       end
     end
     
-    def initialize(socket, options = {})        
-      super(socket)
-      
-      @active ||= options[:active] || false
-      @controller ||= options[:controller] || Actor.current
-      @receiver = @controller
+    def initialize(socket)
+      super
+      @controller = @receiver ||= Actor.current
     end
     
+    # Change the controlling Actor for active mode reception
+    # Set the controlling actor
+    def controller=(controller)
+      raise ArgumentError, "controller must be an actor" unless controller.is_a? Actor
+      
+      @receiver = controller if @receiver == @controller
+      @controller = controller
+    end
+    
+    # Initiate an HTTP request for the given path using the given method
+    # Supports the following options:
+    #
+    #   head: {Key: Value, Key2: Value2}
+    #     Specify HTTP headers, e.g. {'Connection': 'close'}
+    #
+    #   query: {Key: Value}
+    #     Specify query string parameters (auto-escaped)
+    #
+    #   cookies: {Key: Value}
+    #     Specify hash of cookies (auto-escaped)
+    #
+    #   body: String
+    #     Specify the request body (you must encode it for now)
+    #
     def request(method, path, options = {})
       super
+      enable
       
       Actor.receive do |filter|
         filter.when(Case[:http_response_header, self, Object]) do |_, _, response_header|
@@ -113,37 +138,39 @@ module Revactor
     end
     
     def on_connect_failed
-      puts "on_connect_failed"
-      
       super
       @receiver << T[:http_connect_failed, self]
     end
     
     def on_resolve_failed
-      puts "on_resolve_failed"
-      
       super
       @receiver << T[:http_resolve_failed, self]
     end
     
     def on_response_header(response_header)
+      disable
       @receiver << T[:http_response_header, self, response_header]
     end
     
     def on_body_data(data)
+      puts "on_body_data"
+      disable if enabled? and not @active 
       @receiver << T[:http, self, data]
     end
     
     def on_request_complete
+      puts "on_request_complete"
       close
       @receiver << T[:http_request_complete, self]
     end
     
     def on_close
+      puts "on_close"
       @receiver << T[:http_closed, self]
     end
     
     def on_error(reason)
+      puts "on_error"
       close
       @receiver << T[:http_error, self, reason]
     end
@@ -183,5 +210,34 @@ module Revactor
     
     # Is the request encoding chunked?
     def chunked_encoding?; @chunked_encoding; end
+    
+    # Incrementally read the response body
+    def read_body
+      @client.controller = Actor.current
+      @client.enable unless @client.enabled?
+      
+      Actor.receive do |filter|
+        filter.when(Case[:http, @client, Object]) do |_, _, data|
+          return data
+        end
+        
+        filter.when(Case[:http_request_complete, @client]) do
+          return nil
+        end
+        
+        filter.when(Case[:http_closed, @client]) do
+          raise EOFError, "connection closed unexpectedly"
+        end
+        
+        filter.when(Case[:http_error, @client, Object]) do |_, _, reason|
+          raise HttpClientError, reason
+        end
+
+        filter.after(HttpClient::READ_TIMEOUT) do
+          @client.close
+          raise HttpClientError, "read timed out"
+        end
+      end
+    end
   end
 end

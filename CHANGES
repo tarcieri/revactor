@@ -1,5 +1,7 @@
 0.1.3:
 
+* Implement initial HttpClient on top of Rev HttpClient
+
 * Omit pointless syntactic sugar in the scheduler loop for a 2.5% performance
   boost.  loop { ... } bad, while true good.
 
