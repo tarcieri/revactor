@@ -56,6 +56,11 @@ module Revactor
     #
     #   :controller - The controlling actor, default Actor.current
     #
+    #   :filter - An symbol/class or array of symbols/classes which implement 
+    #             #encode and #decode methods to transform data sent and 
+    #             received data respectively via Revactor::TCP::Socket.
+    #             See the "Filters" section in the README for more information
+    #
     def self.listen(addr, port, options = {})
       Listener.new(addr, port, options).attach(Rev::Loop.default).disable
     end
@@ -77,12 +82,13 @@ module Revactor
         #   :filter - An symbol/class or array of symbols/classes which implement 
         #             #encode and #decode methods to transform data sent and 
         #             received data respectively via Revactor::TCP::Socket.
+        #             See the "Filters" section in the README for more information
         #
         def connect(host, port, options = {})
           options[:active]     ||= false
           options[:controller] ||= Actor.current
         
-          super(host, port, options).instance_eval {
+          super.instance_eval {
             @active, @controller = options[:active], options[:controller]
             @filterset = initialize_filter(*options[:filter])
             self
@@ -112,6 +118,7 @@ module Revactor
       #   false - Receiving data is disabled
       #   :once - A single message will be sent to the controlling actor
       #           then active mode will be disabled
+      #
       def active=(state)
         unless @receiver == @controller
           raise "cannot change active state during a synchronous call" 
@@ -334,6 +341,11 @@ module Revactor
       #
       #   :controller - The controlling actor, default Actor.current
       #   
+      #   :filter - An symbol/class or array of symbols/classes which implement 
+      #             #encode and #decode methods to transform data sent and 
+      #             received data respectively via Revactor::TCP::Socket.
+      #             See the "Filters" section in the README for more information
+      #
       def initialize(host, port, options = {})
         super(host, port)
         opts = {
