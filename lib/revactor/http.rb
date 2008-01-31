@@ -241,13 +241,20 @@ module Revactor
       end
     end
     
-    # Consume the entire response body and return a StringIO
-    def body
-      response = ""
+    # Consume the entire response body and return it as a string.
+    # The body is stored for subsequent access.
+    # A maximum body length may optionally be specified
+    def body(maxlength = nil)
+      return @body if @body
+      @body = ""
       
       begin
         while (data = read_body)
-          response << data
+          @body << data
+          
+          if maxlength and @body.size > maxlength
+            raise HttpClientError, "overlength body"
+          end
         end
       rescue EOFError => ex
         # If we didn't get a Content-Length and encoding isn't chunked
@@ -258,7 +265,7 @@ module Revactor
         end
       end
       
-      response
+      @body
     end
   end
 end
