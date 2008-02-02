@@ -1,6 +1,10 @@
 0.1.3:
 
-* Implement initial HttpClient on top of Rev HttpClient
+* Added Revactor::Proxy, a simple method proxy for Actors
+
+* Fixed bug where subclasses of Actor still create Actors when spawned
+
+* Implement initial HttpClient on top of Rev::HttpClient
 
 * Omit pointless syntactic sugar in the scheduler loop for a 2.5% performance
   boost.  loop { ... } bad, while true good.

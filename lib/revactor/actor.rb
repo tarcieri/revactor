@@ -140,7 +140,7 @@ class Actor
         current.instance_eval { @dead = true }
       end
       
-      actor = Actor.new(fiber)
+      actor = new(fiber)
       fiber.instance_eval { @_actor = actor }
     end
   end
