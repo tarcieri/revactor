@@ -97,24 +97,27 @@ class Actor
     # The Scheduler Mailbox allows messages to be safely delivered across
     # threads.  If a thread is sleeping sending it a message will wake
     # it up.
-    class Mailbox < Rev::AsyncWatcher
+    class Mailbox < Rev::IOWatcher
       def initialize
         @queue = []
         @lock = Mutex.new
+        
+        @reader, @writer = IO.pipe
+        super(@reader)
       end
       
       def send(actor, message)
         @lock.synchronize { @queue << T[actor, message] }
-        signal
+        @writer.write "\0"
       end
-      
-      private :signal
-      
+            
       #########
       protected
       #########
       
-      def on_signal
+      def on_readable
+        @reader.read 1
+        
         @lock.synchronize do
           @queue.each { |actor, message| actor << message }
           @queue.clear
