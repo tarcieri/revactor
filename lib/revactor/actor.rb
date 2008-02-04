@@ -181,7 +181,11 @@ class Actor
   
   # Send a message to an actor
   def <<(message)
-    return "can't send messages to actors across threads" unless @thread == Thread.current
+    # Use the scheduler mailbox to send messages across threads
+    unless @thread == Thread.current
+      scheduler.mailbox.send(self, message)
+      return message
+    end
         
     # Erlang discards messages sent to dead actors, and if Erlang does it,
     # it must be the right thing to do, right?  Hooray for the Erlang 

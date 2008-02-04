@@ -4,6 +4,7 @@
 # See file LICENSE for details
 #++
 
+require 'thread'
 require File.dirname(__FILE__) + '/../revactor'
 
 class Actor
@@ -12,9 +13,14 @@ class Actor
   # processed their mailboxes then the scheduler waits for any outstanding
   # Rev events.  If there are no active Rev watchers then the scheduler exits.
   class Scheduler
+    attr_reader :mailbox
+    
     def initialize
       @queue = []
       @running = false
+      @mailbox = Mailbox.new
+      
+      @mailbox.attach Rev::Loop.default
     end
 
     # Schedule an Actor to be executed, and run the scheduler if it isn't
@@ -28,18 +34,18 @@ class Actor
         # Reschedule the current Actor for execution
         @queue << Actor.current
 
-        # Persist the fiber the scheduler runs in
-        @fiber ||= Fiber.new do 
-          while true
-            run; Fiber.yield
-          end
-        end
-        
-        # Resume the scheduler
-        @fiber.resume
+        # Start the scheduler
+        Fiber.new { run }.resume
       end
     end
-  
+    
+    # Is the scheduler running?
+    def running?; @running; end
+
+    #########
+    protected
+    #########
+      
     # Run the scheduler
     def run
       return if @running
@@ -47,13 +53,14 @@ class Actor
       @running = true
       default_loop = Rev::Loop.default
     
-      until @queue.empty? and not default_loop.has_active_watchers?
+      while true
         @queue.each do |actor|
           begin
             actor.fiber.resume
             handle_exit(actor) if actor.dead?
           rescue FiberError
             # Handle Actors whose Fibers died after being scheduled
+            actor.instance_eval { @dead = true }
             handle_exit(actor)
           rescue => ex
             handle_exit(actor, ex)
@@ -61,21 +68,10 @@ class Actor
         end
       
         @queue.clear
-        default_loop.run_once if default_loop.has_active_watchers?
+        default_loop.run_once
       end
-    
-      @running = false
     end
-  
-    # Is the scheduler running?
-    def running?
-      @running
-    end
-    
-    #########
-    protected
-    #########
-    
+
     def handle_exit(actor, ex = nil)
       actor.instance_eval do
         # Mark Actor as dead
@@ -96,6 +92,34 @@ class Actor
     def log_exception(ex)
       # FIXME this should go to a real logger
       STDERR.puts "#{ex.class}: #{[ex, *ex.backtrace].join("\n\t")}"
+    end
+    
+    # The Scheduler Mailbox allows messages to be safely delivered across
+    # threads.  If a thread is sleeping sending it a message will wake
+    # it up.
+    class Mailbox < Rev::AsyncWatcher
+      def initialize
+        @queue = []
+        @lock = Mutex.new
+      end
+      
+      def send(actor, message)
+        @lock.synchronize { @queue << T[actor, message] }
+        signal
+      end
+      
+      private :signal
+      
+      #########
+      protected
+      #########
+      
+      def on_signal
+        @lock.synchronize do
+          @queue.each { |actor, message| actor << message }
+          @queue.clear
+        end
+      end
     end
   end
 end

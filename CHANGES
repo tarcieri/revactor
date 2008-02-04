@@ -1,5 +1,8 @@
 0.1.3:
 
+* Add a guaranteed blocking idle state for the Actor scheduler, fixing a bug
+  where an idle root Actor would spin on the scheduler when calling receive
+
 * Fixed bug where subclasses of Actor still create Actors when spawned
 
 * Implement initial HttpClient on top of Rev::HttpClient

@@ -44,6 +44,9 @@ describe Actor do
       end
       
       actor << :foo
+      
+      # Hack to run the Actor scheduler once
+      Actor.sleep 0
       @actor_run.should be_true
     end
     
@@ -62,6 +65,9 @@ describe Actor do
       end
       
       ['first message', 'second message', 'third message'].each { |m| actor << m }
+      
+      # Hack to run the Actor scheduler once
+      Actor.sleep 0
       @actor_run.should be_true
     end
         
@@ -73,6 +79,9 @@ describe Actor do
         end.should == :right
         @actor_run = true
       end
+      
+      # Hack to run the Actor scheduler
+      Actor.sleep 0.02
       @actor_run.should be_true
     end
     
@@ -90,6 +99,9 @@ describe Actor do
       end
       
       [:foo, :bar, :baz].each { |m| actor << m }
+      
+      # Hack to run the Actor scheduler once
+      Actor.sleep 0
       @actor_run.should be_true
     end
   end
@@ -139,6 +151,9 @@ describe Actor do
     
     actor.dead?.should be_false
     actor << :foobar
+    
+    # Hack to run the Actor scheduler once
+    Actor.sleep 0
     actor.dead?.should be_true
   end
 end
