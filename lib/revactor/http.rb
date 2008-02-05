@@ -55,9 +55,10 @@ module Revactor
         MAX_REDIRECTS.times do
           raise URI::InvalidURIError, "invalid HTTP URI: #{uri}" unless uri.is_a? URI::HTTP
           uri.path = "/" if uri.path.empty?
+          request_options = uri.is_a?(URI::HTTPS) ? options.merge(:ssl => true) : options
         
           client = connect(uri.host, uri.port)
-          response = client.request(method, uri.path, options, &block)
+          response = client.request(method, uri.path, request_options, &block)
           
           return response unless response.status == 301 or response.status == 302
           uri = URI.parse(response.header_fields['Location'])
@@ -92,6 +93,9 @@ module Revactor
     # Initiate an HTTP request for the given path using the given method
     # Supports the following options:
     #
+    #   ssl: Boolean
+    #     If true, an HTTPS request will be made
+    #
     #   head: {Key: Value, Key2: Value2}
     #     Specify HTTP headers, e.g. {'Connection': 'close'}
     #
@@ -105,6 +109,12 @@ module Revactor
     #     Specify the request body (you must encode it for now)
     #
     def request(method, path, options = {})
+      if options.delete(:ssl)
+        require 'rev/ssl'
+        extend Rev::SSL
+        ssl_start
+      end
+      
       super
       enable
       
@@ -186,6 +196,9 @@ module Revactor
       
       # Convert header fields hash from LIKE_THIS to Like-This
       @header_fields = response_header.reduce({}) { |h, (k, v)| h[k.split('_').map(&:capitalize).join('-')] = v; h }
+      
+      # Extract Content-Type if available
+      @content_type = @header_fields.delete('Content-Type')
     end
     
     # The response status as an integer (e.g. 200)
@@ -196,6 +209,9 @@ module Revactor
     
     # The HTTP version returned (e.g. "HTTP/1.1")
     attr_reader :version
+    
+    # The MIME type of the response's content
+    attr_reader :content_type
     
     # The content length as an integer, or nil if the length is unspecified or
     # the response is using chunked transfer encoding
