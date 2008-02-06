@@ -50,6 +50,7 @@ module Revactor
       
       # Perform an HTTP request for the given method and return a response object
       def request(method, uri, options = {}, &block)
+        follow_redirects = options.has_key?(:follow_redirects) ? options[:follow_redirects] : true
         uri = URI.parse(uri)
         
         MAX_REDIRECTS.times do
@@ -60,7 +61,9 @@ module Revactor
           client = connect(uri.host, uri.port)
           response = client.request(method, uri.path, request_options, &block)
           
-          return response unless response.status == 301 or response.status == 302
+          return response unless follow_redirects and [301, 302].include? response.status
+          response.close
+          
           uri = URI.parse(response.header_fields['Location'])
         end
         
@@ -282,6 +285,16 @@ module Revactor
       end
       
       @body
+    end
+    
+    # Explicitly close the connection
+    def close
+      return if @client.closed?
+      @client.controller = Actor.current
+      @client.close
+      
+      # Wait for the :http_closed message
+      Actor.receive { |f| f.when(Case[:http_closed, @client]) {} }
     end
   end
 end
