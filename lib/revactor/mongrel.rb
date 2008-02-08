@@ -31,31 +31,33 @@ module Mongrel
 
     # Runs the thing.  It returns the Actor the listener is running in.
     def run
-      @acceptor = Actor.spawn do
-        begin
-          while true
-            begin
-              client = @socket.accept
-              actor = Actor.spawn client, &method(:process_client)
-              actor[:started_on] = Time.now
-            rescue StopServer
-              break
-            rescue Errno::ECONNABORTED
-              # client closed the socket even before accept
-              client.close rescue nil
-            rescue Object => e
-              STDERR.puts "#{Time.now}: Unhandled listen loop exception #{e.inspect}."
-              STDERR.puts e.backtrace.join("\n")
-            end
+      begin
+        while true
+          begin
+            client = @socket.accept
+            actor = Actor.spawn client, &method(:process_client)
+            actor[:started_on] = Time.now
+          rescue Interrupt, StopServer
+            break
+          rescue Errno::ECONNABORTED
+            # client closed the socket even before accept
+            client.close rescue nil
+          rescue Object => e
+            STDERR.puts "#{Time.now}: Unhandled listen loop exception #{e.inspect}."
+            STDERR.puts e.backtrace.join("\n")
           end
-          graceful_shutdown
-        ensure
-          @socket.close
-          # STDERR.puts "#{Time.now}: Closed socket."
         end
+        graceful_shutdown
+      ensure
+        @socket.close
+        # STDERR.puts "#{Time.now}: Closed socket."
       end
-
-      return @acceptor
+    end
+    
+    # Clean up after any dead workers
+    def reap_dead_workers(reason = 'unknown')
+      # FIXME This should signal all workers to die
+      0
     end
   end
 end
