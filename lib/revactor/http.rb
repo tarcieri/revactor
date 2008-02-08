@@ -112,10 +112,22 @@ module Revactor
     #     Specify the request body (you must encode it for now)
     #
     def request(method, path, options = {})
-      if options.delete(:ssl)
-        require 'rev/ssl'
-        extend Rev::SSL
-        ssl_start
+      if options[:ssl]
+        ssl_handshake
+        
+        Actor.receive do |filter|
+          filter.when(Case[:https_connected, self]) do
+            disable
+          end
+          
+          filter.when(Case[:http_closed, self]) do
+            raise EOFError, "SSL handshake failed"
+          end
+          
+          filter.after(TCP::CONNECT_TIMEOUT) do
+            raise TCP::ConnectError, "SSL handshake timed out"
+          end
+        end
       end
       
       super
@@ -145,9 +157,19 @@ module Revactor
     protected
     #########
     
+    def ssl_handshake
+      require 'rev/ssl'
+      extend Rev::SSL
+      ssl_client_start
+    end
+    
     def on_connect
       super
       @receiver << T[:http_connected, self]
+    end
+    
+    def on_ssl_connect
+      @receiver << [:https_connected, self]
     end
     
     def on_connect_failed
