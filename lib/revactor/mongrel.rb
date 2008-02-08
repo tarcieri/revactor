@@ -29,8 +29,9 @@ module Mongrel
       @timeout = timeout
     end
 
-    # Runs the thing.  It returns the Actor the listener is running in.
-    def run
+    # Start Mongrel.  This method executes the Mongrel event loop, and will
+    # not return until interrupted or explicitly stopped.
+    def start
       begin
         while true
           begin
@@ -52,6 +53,11 @@ module Mongrel
         @socket.close
         # STDERR.puts "#{Time.now}: Closed socket."
       end
+    end
+
+    # Runs the thing.  Returns the Thread the server is running in.
+    def run
+      @acceptor = Thread.new { start }
     end
     
     # Clean up after any dead workers

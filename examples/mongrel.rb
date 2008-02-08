@@ -9,4 +9,4 @@ server = Mongrel::HttpServer.new(ADDR, PORT)
 server.register '/', Mongrel::DirHandler.new(".")
 
 puts "Running on #{ADDR}:#{PORT}"
-server.run
+server.start
