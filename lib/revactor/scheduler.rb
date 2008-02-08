@@ -54,7 +54,7 @@ class Actor
       default_loop = Rev::Loop.default
     
       while true
-        @queue.each do |actor|
+        while actor = @queue.shift
           begin
             actor.fiber.resume
             handle_exit(actor) if actor.dead?
@@ -67,7 +67,6 @@ class Actor
           end
         end
       
-        @queue.clear
         default_loop.run_once
       end
     end
