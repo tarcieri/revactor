@@ -61,10 +61,18 @@ module Revactor
           client = connect(uri.host, uri.port)
           response = client.request(method, uri.path, request_options, &block)
           
-          return response unless follow_redirects and [301, 302].include? response.status
+          return response unless follow_redirects and [301, 302, 303].include? response.status
           response.close
           
-          uri = URI.parse(response.header_fields['Location'])
+          location = response.header_fields['Location']
+          raise "redirect with no Location: header encountered" if location.nil?
+          
+          # Append host to relative URLs
+          if location[0] == '/'
+            location = "#{uri.scheme}://#{uri.host}" << location
+          end
+          
+          uri = URI.parse(location)
         end
         
         raise HttpClientError, "exceeded maximum of #{MAX_REDIRECTS} redirects"
