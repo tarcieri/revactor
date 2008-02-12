@@ -26,7 +26,7 @@ module Revactor
 end
 
 %w{
-  actor scheduler mailbox delegator tcp http
+  actor scheduler mailbox delegator tcp http_client
   filters/line filters/packet
 }.each do |file|
   require File.dirname(__FILE__) + '/revactor/' + file
