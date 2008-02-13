@@ -148,12 +148,15 @@ module Revactor
           return HttpResponse.new(self, response_header)
         end
         
-        filter.when(Case[:http_closed, self]) do
-          raise EOFError, "connection closed unexpectedly"
+        filter.when(Case[:http_error, self, Object]) do |_, _, reason|
+          # Consume the :http_closed message
+          Actor.receive { |filter| filter.when(Case[:http_closed, self]) }
+          
+          raise HttpClientError, reason
         end
         
-        filter.when(Case[:http_error, self, Object]) do |_, _, reason|
-          raise HttpClientError, reason
+        filter.when(Case[:http_closed, self]) do
+          raise EOFError, "connection closed unexpectedly"
         end
 
         filter.after(REQUEST_TIMEOUT) do
@@ -315,6 +318,10 @@ module Revactor
         unless (content_length.nil? or content_length.zero?) and not chunked_encoding?
           raise ex 
         end
+      end
+      
+      if content_length and body.size != content_length
+        raise HttpClientError, "body size does not match Content-Length (#{body.size} of #{content_length})"
       end
       
       @body
