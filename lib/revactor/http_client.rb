@@ -135,6 +135,10 @@ module Revactor
           end
           
           filter.after(TCP::CONNECT_TIMEOUT) do
+            close unless closed?
+            
+            # Consume the :http_closed message
+            Actor.receive { |filter| filter.when(Case[:http_closed, self]) }
             raise TCP::ConnectError, "SSL handshake timed out"
           end
         end
@@ -160,7 +164,11 @@ module Revactor
         end
 
         filter.after(REQUEST_TIMEOUT) do
-          close
+          close unless closed?
+          
+          # Consume the :http_closed message
+          Actor.receive { |filter| filter.when(Case[:http_closed, self]) }
+          
           raise HttpClientError, "request timed out"
         end
       end
@@ -290,7 +298,11 @@ module Revactor
         end
 
         filter.after(HttpClient::READ_TIMEOUT) do
-          @client.close
+          @client.close unless @client.closed?
+          
+          # Consume the :http_closed message
+          Actor.receive { |filter| filter.when(Case[:http_closed, @client]) }
+          
           raise HttpClientError, "read timed out"
         end
       end
