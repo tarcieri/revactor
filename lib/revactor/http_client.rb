@@ -22,6 +22,9 @@ module Revactor
     # Maximum number of HTTP redirects to follow
     MAX_REDIRECTS = 10
     
+    # Statuses which indicate the request was redirected
+    REDIRECT_STATUSES = [301, 302, 303, 307]
+    
     class << self
       def connect(host, port = 80)        
         client = super
@@ -55,13 +58,12 @@ module Revactor
         
         MAX_REDIRECTS.times do
           raise URI::InvalidURIError, "invalid HTTP URI: #{uri}" unless uri.is_a? URI::HTTP
-          uri.path = "/" if uri.path.empty?
           request_options = uri.is_a?(URI::HTTPS) ? options.merge(:ssl => true) : options
         
           client = connect(uri.host, uri.port)
-          response = client.request(method, uri.path, request_options, &block)
+          response = client.request(method, uri.request_uri, request_options, &block)
           
-          return response unless follow_redirects and [301, 302, 303].include? response.status
+          return response unless follow_redirects and REDIRECT_STATUSES.include? response.status
           response.close
           
           location = response.header_fields['Location']
@@ -268,19 +270,20 @@ module Revactor
         
         filter.when(Case[:http_request_complete, @client]) do
           # Consume the :http_closed message
-          Actor.receive do |filter| 
-            filter.when(Case[:http_closed, @client]) {}
-          end
+          Actor.receive { |filter| filter.when(Case[:http_closed, @client]) }
           
           return nil
         end
         
-        filter.when(Case[:http_closed, @client]) do
-          raise EOFError, "connection closed unexpectedly"
+        filter.when(Case[:http_error, @client, Object]) do |_, _, reason|
+          # Consume the :http_closed message
+          Actor.receive { |filter| filter.when(Case[:http_closed, @client]) }
+          
+          raise HttpClientError, reason
         end
         
-        filter.when(Case[:http_error, @client, Object]) do |_, _, reason|
-          raise HttpClientError, reason
+        filter.when(Case[:http_closed, @client]) do
+          raise EOFError, "connection closed unexpectedly"
         end
 
         filter.after(HttpClient::READ_TIMEOUT) do

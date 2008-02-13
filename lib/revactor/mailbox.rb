@@ -121,7 +121,8 @@ class Actor
       # Provide a pattern to match against with === and a block to call
       # when the pattern is matched.
       def when(pattern, &action)
-        raise ArgumentError, "no block given" unless action
+        # Don't explicitly require an action to be specified 
+        action ||= proc {}
         @ruleset << [pattern, action]
       end
 
@@ -131,7 +132,7 @@ class Actor
         raise ArgumentError, "timeout already specified" if @mailbox.timer
         raise ArgumentError, "must be zero or positive" if seconds < 0
       
-        # Don't explicitly require an action to be specified for a timeout
+        # Don't explicitly require an action to be specified
         @mailbox.timeout_action = action || proc {}
         @mailbox.timer = Timer.new(seconds, Actor.current).attach(Rev::Loop.default)
       end
