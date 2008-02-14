@@ -136,9 +136,6 @@ module Revactor
           
           filter.after(TCP::CONNECT_TIMEOUT) do
             close unless closed?
-            
-            # Consume the :http_closed message
-            Actor.receive { |filter| filter.when(Case[:http_closed, self]) }
             raise TCP::ConnectError, "SSL handshake timed out"
           end
         end
@@ -153,9 +150,7 @@ module Revactor
         end
         
         filter.when(Case[:http_error, self, Object]) do |_, _, reason|
-          # Consume the :http_closed message
-          Actor.receive { |filter| filter.when(Case[:http_closed, self]) }
-          
+          close unless closed?
           raise HttpClientError, reason
         end
         
@@ -164,10 +159,8 @@ module Revactor
         end
 
         filter.after(REQUEST_TIMEOUT) do
+          @finished = true
           close unless closed?
-          
-          # Consume the :http_closed message
-          Actor.receive { |filter| filter.when(Case[:http_closed, self]) }
           
           raise HttpClientError, "request timed out"
         end
@@ -214,15 +207,17 @@ module Revactor
     end
     
     def on_request_complete
+      @finished = true
       @receiver << T[:http_request_complete, self]
       close
     end
     
     def on_close
-      @receiver << T[:http_closed, self]
+      @receiver << T[:http_closed, self] unless @finished
     end
     
     def on_error(reason)
+      @finished = true
       @receiver << T[:http_error, self, reason]
       close
     end
@@ -280,16 +275,10 @@ module Revactor
         end
         
         filter.when(Case[:http_request_complete, @client]) do
-          # Consume the :http_closed message
-          Actor.receive { |filter| filter.when(Case[:http_closed, @client]) }
-          
           return nil
         end
         
         filter.when(Case[:http_error, @client, Object]) do |_, _, reason|
-          # Consume the :http_closed message
-          Actor.receive { |filter| filter.when(Case[:http_closed, @client]) }
-          
           raise HttpClientError, reason
         end
         
@@ -298,11 +287,8 @@ module Revactor
         end
 
         filter.after(HttpClient::READ_TIMEOUT) do
-          @client.close unless @client.closed?
-          
-          # Consume the :http_closed message
-          Actor.receive { |filter| filter.when(Case[:http_closed, @client]) }
-          
+          @finished = true
+          @client.close unless @client.closed?          
           raise HttpClientError, "read timed out"
         end
       end
@@ -342,11 +328,9 @@ module Revactor
     # Explicitly close the connection
     def close
       return if @client.closed?
+      @finished = true
       @client.controller = Actor.current
-      @client.close
-      
-      # Wait for the :http_closed message
-      Actor.receive { |f| f.when(Case[:http_closed, @client]) {} }
+      @client.close      
     end
   end
 end

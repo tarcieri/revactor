@@ -30,7 +30,7 @@ class Actor
 
       # Clear mailbox processing variables
       action = matched_index = nil
-      processed_upto = 0
+      at = 0
     
       # Clear timeout variables
       @timed_out = false
@@ -43,19 +43,13 @@ class Actor
 
       # Process incoming messages
       while action.nil?
-        @queue[processed_upto..@queue.size].each_with_index do |message, index|
-          unless (action = filter.match message)
-            # The filter did not match an action for the current message
-            # Keep track of which messages we've ran the filter across so it
-            # isn't re-run against messages it already failed to match
-            processed_upto += 1
-            next
-          end
-        
-          # We've found a matching action, so break out of the loop
-          matched_index = processed_upto + index
+        at.upto(@queue.size - 1) do |i|
+          next unless action = filter.match(@queue[i])
+          matched_index = i
           break
         end
+        
+        at = @queue.size
 
         # Ignore timeouts if we've matched a message
         if action
