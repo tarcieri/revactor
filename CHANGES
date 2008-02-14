@@ -7,8 +7,7 @@
 
 * Implement initial HttpClient on top of Rev::HttpClient
 
-* Omit pointless syntactic sugar in the scheduler loop for a 2.5% performance
-  boost.  loop { ... } bad, while true good.
+* Optimize scheduler loop and message dispatch for a 25% speed boost
 
 * Fix bug with the toplevel Actor never resuming if a newly spawend Actor
   registeres interest in Rev events.  Toplevel Actor is now rescheduled if
