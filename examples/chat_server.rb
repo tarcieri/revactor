@@ -16,7 +16,7 @@ server = Actor.spawn do
     Actor.receive do |filter|
       filter.when(T[:register]) do |_, client, nickname|
         clients[client] = nickname[0..29] # 30 char limit, nya
-        client << [:write, "*** Users: " + clients.values.join(', ')]
+        client << T[:write, "*** Users: " + clients.values.join(', ')]
         broadcast.call "*** #{nickname} joined"
       end
 
@@ -59,7 +59,7 @@ loop do
       end
     rescue EOFError
       puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
-      server << [:disconnected, Actor.current] if registered
+      server << T[:disconnected, Actor.current] if registered
       break
     end
   end
