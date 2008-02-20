@@ -99,6 +99,11 @@ class Actor
       receive { |filter| filter.after(seconds) }
     end
     
+    # Run the event loop and return after processing all outstanding messages
+    def tick
+      sleep 0
+    end
+    
     # Wait for messages matching a given filter.  The filter object is yielded
     # to be block passed to receive.  You can then invoke the when argument
     # which takes a parameter and a block.  Messages are compared (using ===)
