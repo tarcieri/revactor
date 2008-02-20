@@ -311,7 +311,7 @@ module Revactor
         
         if message.is_a?(Array) and not message.empty?
           message.each { |msg| @receiver << T[:tcp, self, msg] }
-        elsif message
+        elsif message and not message.empty?
           @receiver << T[:tcp, self, message]
         else return
         end

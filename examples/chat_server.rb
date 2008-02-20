@@ -27,7 +27,7 @@ server = Actor.spawn do
 
       filter.when(T[:disconnected]) do |_, client|
         nickname = clients.delete client
-        broadcast.call "*** #{nickname} left"
+        broadcast.call "*** #{nickname} left" if nickname
       end
     end
   end
@@ -44,29 +44,26 @@ loop do
       server << T[:register, Actor.current, nickname]
       sock.controller = Actor.current
       sock.active = :once
-    rescue EOFError
-      puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
-    end
     
-    until sock.closed?
-      Actor.receive do |filter|
-        filter.when(T[:tcp, sock]) do |_, _, message|
-          server << T[:say, Actor.current, message]
-          sock.active = :once
-        end
-        
-        filter.when(T[:write]) do |_, message|
-          begin
+      loop do
+        Actor.receive do |filter|
+          filter.when(T[:tcp, sock]) do |_, _, message|
+            server << T[:say, Actor.current, message]
+            sock.active = :once
+          end
+          
+          filter.when(T[:write]) do |_, message|
             sock.write message
-          rescue EOFError
+          end
+          
+          filter.when(T[:tcp_closed, sock]) do
+            raise EOFError
           end
         end
-        
-        filter.when(T[:tcp_closed, sock]) do
-          puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
-          server << T[:disconnected, Actor.current]
-        end
       end
+    rescue EOFError
+      puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
+      server << T[:disconnected, Actor.current]
     end
   end
 end
