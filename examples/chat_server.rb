@@ -16,8 +16,8 @@ server = Actor.spawn do
     Actor.receive do |filter|
       filter.when(T[:register]) do |_, client, nickname|
         clients[client] = nickname[0..29] # 30 char limit, nya
-        client << T[:write, "*** Users: " + clients.values.join(', ')]
         broadcast.call "*** #{nickname} joined"
+        client << T[:write, "*** Users: " + clients.values.join(', ')]
       end
 
       filter.when(T[:say]) do |_, client, msg|
