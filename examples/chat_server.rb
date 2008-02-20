@@ -46,30 +46,25 @@ loop do
       puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
     end
 
-    unless sock.closed?
-      sock.controller = Actor.current
-      sock.active = :once
+    sock.controller = Actor.current
+    sock.active = :once
     
-      filter = proc do |f|
-        f.when(T[:write]) do |_, message|
-          sock.write message
-          true
-        end
-
-        f.when(T[:tcp, sock]) do |_, _, message|
-          server << T[:say, Actor.current, message]
-          sock.active = :once
-          true
-        end
-    
-        f.when(T[:tcp_closed, sock]) do
+    until sock.closed?
+      Actor.receive do |filter|
+        filter.when(T[:tcp_closed, sock]) do
           puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
           server << T[:disconnected, Actor.current]
-          false
+        end
+        
+        filter.when(T[:write]) do |_, message|
+          sock.write message
+        end
+
+        filter.when(T[:tcp, sock]) do |_, _, message|
+          server << T[:say, Actor.current, message]
+          sock.active = :once
         end
       end
-    
-      while Actor.receive(&filter); end
     end
   end
 end
