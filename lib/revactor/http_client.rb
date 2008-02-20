@@ -33,7 +33,7 @@ module Revactor
         client.attach Rev::Loop.default
       
         Actor.receive do |filter|
-          filter.when(Case[Object, client]) do |message, _|
+          filter.when(T[Object, client]) do |message, _|
             case message
             when :http_connected
               client.disable
@@ -127,11 +127,11 @@ module Revactor
         ssl_handshake
         
         Actor.receive do |filter|
-          filter.when(Case[:https_connected, self]) do
+          filter.when(T[:https_connected, self]) do
             disable
           end
           
-          filter.when(Case[:http_closed, self]) do
+          filter.when(T[:http_closed, self]) do
             raise EOFError, "SSL handshake failed"
           end
           
@@ -146,16 +146,16 @@ module Revactor
       enable
       
       Actor.receive do |filter|
-        filter.when(Case[:http_response_header, self, Object]) do |_, _, response_header|
+        filter.when(T[:http_response_header, self]) do |_, _, response_header|
           return HttpResponse.new(self, response_header)
         end
         
-        filter.when(Case[:http_error, self, Object]) do |_, _, reason|
+        filter.when(T[:http_error, self, Object]) do |_, _, reason|
           close unless closed?
           raise HttpClientError, reason
         end
         
-        filter.when(Case[:http_closed, self]) do
+        filter.when(T[:http_closed, self]) do
           raise EOFError, "connection closed unexpectedly"
         end
 
@@ -271,19 +271,19 @@ module Revactor
       @client.enable if @client.attached? and not @client.enabled?
       
       Actor.receive do |filter|
-        filter.when(Case[:http, @client, Object]) do |_, _, data|
+        filter.when(T[:http, @client]) do |_, _, data|
           return data
         end
         
-        filter.when(Case[:http_request_complete, @client]) do
+        filter.when(T[:http_request_complete, @client]) do
           return nil
         end
         
-        filter.when(Case[:http_error, @client, Object]) do |_, _, reason|
+        filter.when(T[:http_error, @client]) do |_, _, reason|
           raise HttpClientError, reason
         end
         
-        filter.when(Case[:http_closed, @client]) do
+        filter.when(T[:http_closed, @client]) do
           raise EOFError, "connection closed unexpectedly"
         end
 

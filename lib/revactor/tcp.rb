@@ -31,7 +31,7 @@ module Revactor
       socket.attach Rev::Loop.default
 
       Actor.receive do |filter|
-        filter.when(Case[Object, socket]) do |message, _|
+        filter.when(T[Object, socket]) do |message, _|
           case message
           when :tcp_connected
             return socket
@@ -169,7 +169,7 @@ module Revactor
         
         loop do
           Actor.receive do |filter|
-            filter.when(Case[:tcp, self, Object]) do |_, _, data|
+            filter.when(T[:tcp, self]) do |_, _, data|
               if length.nil?
                 @receiver = @controller
                 @active = active
@@ -189,7 +189,7 @@ module Revactor
               end
             end
             
-            filter.when(Case[:tcp_closed, self]) do
+            filter.when(T[:tcp_closed, self]) do
               unless @receiver == @controller
                 @receiver = @controller
                 @receiver << T[:tcp_closed, self]
@@ -214,7 +214,7 @@ module Revactor
         super(encode(data))
         
         Actor.receive do |filter|
-          filter.when(Case[:tcp_write_complete, self]) do
+          filter.when(T[:tcp_write_complete, self]) do
             @receiver = @controller
             @active = active
             enable if @active and not enabled?
@@ -222,7 +222,7 @@ module Revactor
             return data.size
           end
           
-          filter.when(Case[:tcp_closed, self]) do
+          filter.when(T[:tcp_closed, self]) do
             @active = false
             raise EOFError, "connection closed"
           end
@@ -387,7 +387,7 @@ module Revactor
         enable
         
         Actor.receive do |filter|
-          filter.when(Case[:tcp_connection, self, Object]) do |_, _, sock|
+          filter.when(T[:tcp_connection, self]) do |_, _, sock|
             @accepting = false            
             return sock
           end
