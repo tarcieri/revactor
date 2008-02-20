@@ -14,7 +14,13 @@ unless defined? Tuple
   # A Tuple class.  Will (eventually) be a subset of Array
   # with fixed size and faster performance, at least that's
   # the hope with Rubinius...
-  class Tuple < Array; end
+  class Tuple < Array
+    def ===(obj)
+      return false unless obj.is_a? Array
+      size.times { |n| return false unless self[n] === obj[n] }
+      true
+    end
+  end
 end
 
 # Shortcut Tuple as T

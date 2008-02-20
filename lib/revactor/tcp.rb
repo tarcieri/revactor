@@ -217,16 +217,13 @@ module Revactor
           filter.when(Case[:tcp_write_complete, self]) do
             @receiver = @controller
             @active = active
-            enable if @active
+            enable if @active and not enabled?
             
             return data.size
           end
           
           filter.when(Case[:tcp_closed, self]) do
-            @receiver = @controller
-            @active = active
-            enable if @active
-            
+            @active = false
             raise EOFError, "connection closed"
           end
         end

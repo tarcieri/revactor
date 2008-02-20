@@ -7,6 +7,7 @@
 require File.dirname(__FILE__) + '/../revactor'
 require 'uri'
 
+  
 module Revactor
   # Thrown for all HTTP-specific errors
   class HttpClientError < StandardError; end
