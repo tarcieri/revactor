@@ -48,12 +48,12 @@ loop do
       loop do
         sock.active = :once
         Actor.receive do |filter|
-          filter.when(T[:tcp, sock]) do |_, _, message|
-            server << T[:say, Actor.current, message]
-          end
-
           filter.when(T[:write]) do |_, message|
             sock.write message
+          end
+ 
+          filter.when(T[:tcp, sock]) do |_, _, message|
+            server << T[:say, Actor.current, message]
           end
         end
       end
