@@ -1,4 +1,4 @@
-require 'revactor'
+require File.dirname(__FILE__) + '/../lib/revactor'
 
 HOST = 'localhost'
 PORT = 4321
@@ -42,12 +42,11 @@ loop do
       nickname = sock.read
 
       server << T[:register, Actor.current, nickname]
+      sock.controller = Actor.current
+      sock.active = :once
     rescue EOFError
       puts "#{sock.remote_addr}:#{sock.remote_port} disconnected"
     end
-
-    sock.controller = Actor.current
-    sock.active = :once
     
     until sock.closed?
       Actor.receive do |filter|
@@ -57,7 +56,10 @@ loop do
         end
         
         filter.when(T[:write]) do |_, message|
-          sock.write message
+          begin
+            sock.write message
+          rescue EOFError
+          end
         end
         
         filter.when(T[:tcp_closed, sock]) do
