@@ -67,8 +67,8 @@ module Revactor
           return response unless follow_redirects and REDIRECT_STATUSES.include? response.status
           response.close
           
-          location = response.header_fields['Location']
-          raise "redirect with no Location: header encountered" if location.nil?
+          location = response.headers['location']
+          raise "redirect with no location header: #{uri}" if location.nil?
           
           # Append host to relative URLs
           if location[0] == '/'
@@ -236,11 +236,17 @@ module Revactor
       @content_length = response_header.content_length
       @chunked_encoding = response_header.chunked_encoding?
       
-      # Convert header fields hash from LIKE_THIS to Like-This
-      @header_fields = response_header.reduce({}) { |h, (k, v)| h[k.split('_').map(&:capitalize).join('-')] = v; h }
+      # Convert header fields hash from LIKE_THIS to like-this
+      @headers = response_header.reduce({}) { |h, (k, v)| h[k.split('_').map(&:downcase).join('-')] = v; h }
+      
+      # Extract Transfer-Encoding if available
+      @transfer_encoding = @headers.delete('transfer-encoding')
       
       # Extract Content-Type if available
-      @content_type = @header_fields.delete('Content-Type')
+      @content_type = @headers.delete('content-type')
+      
+      # Extract Content-Encoding if available
+      @content_encoding = @headers.delete('content-encoding') || 'identity'
     end
     
     # The response status as an integer (e.g. 200)
@@ -252,6 +258,12 @@ module Revactor
     # The HTTP version returned (e.g. "HTTP/1.1")
     attr_reader :version
     
+    # The encoding of the transfer
+    attr_reader :transfer_encoding
+    
+    # The encoding of the content.  Gzip encoding will be processed automatically
+    attr_reader :content_encoding
+    
     # The MIME type of the response's content
     attr_reader :content_type
     
@@ -260,7 +272,7 @@ module Revactor
     attr_reader :content_length
     
     # Access to the raw header fields from the request
-    attr_reader :header_fields
+    attr_reader :headers
     
     # Is the request encoding chunked?
     def chunked_encoding?; @chunked_encoding; end

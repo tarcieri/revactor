@@ -86,8 +86,8 @@ class Actor
       @queue.empty?
     end
     
-    # Drain all messages from the mailbox
-    def drain
+    # Clear the mailbox
+    def clear
       @queue.clear
     end
   
