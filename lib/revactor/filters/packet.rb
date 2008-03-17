@@ -14,7 +14,7 @@ module Revactor
     # length prefix followed by a message body, such as DRb.  Either 16-bit
     # or 32-bit prefixes are supported.
     class Packet
-      def initialize(size = 2)
+      def initialize(size = 4)
         unless size == 2 or size == 4
           raise ArgumentError, 'only 2 or 4 byte prefixes are supported' 
         end
