@@ -27,7 +27,7 @@ end
 T = Tuple unless defined? T
 
 module Revactor
-  Revactor::VERSION = '0.1.3' unless defined? Revactor::VERSION
+  Revactor::VERSION = '0.2.0' unless defined? Revactor::VERSION
   def self.version() VERSION end
 end
 
