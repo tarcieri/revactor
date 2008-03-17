@@ -1,6 +1,6 @@
-require File.dirname(__FILE__) + '/../revactor'
 require 'mongrel'
-
+require File.dirname(__FILE__) + '/../revactor'
+ 
 class Revactor::TCP::Socket
   # Monkeypatched readpartial routine inserted whenever Revactor's mongrel.rb
   # is loaded.  The value passed to this method is ignored, so it is not

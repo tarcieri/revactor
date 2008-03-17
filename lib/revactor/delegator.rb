@@ -4,8 +4,6 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../revactor'
-
 # A Delegator whose delegate runs in a separate Actor.  This allows
 # an easy method for constructing synchronous calls to a separate Actor
 # which cause the current Actor to block until they complete.

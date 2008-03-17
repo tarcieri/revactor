@@ -4,8 +4,6 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../revactor'
-
 module Revactor
   # The TCP module holds all Revactor functionality related to the
   # Transmission Control Protocol, including drop-in replacements
@@ -346,8 +344,8 @@ module Revactor
       def initialize(host, port, options = {})
         super(host, port)
         opts = {
-          active:     false,
-          controller: Actor.current
+          :active     => false,
+          :controller => Actor.current
         }.merge(options)
         
         @active, @controller = opts[:active], opts[:controller]

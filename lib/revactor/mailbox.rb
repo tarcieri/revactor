@@ -4,8 +4,6 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../revactor'
-
 class Actor
   # Actor mailbox.  For purposes of efficiency the mailbox also handles 
   # suspending and resuming an actor when no messages match its filter set.
@@ -78,7 +76,7 @@ class Actor
       end
     
       # Otherwise we matched a message, so process it with the action      
-      action.(@queue.delete_at matched_index)
+      action.call @queue.delete_at(matched_index)
     end
     
     # Is the mailbox empty?

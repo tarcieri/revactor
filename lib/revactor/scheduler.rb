@@ -5,7 +5,6 @@
 #++
 
 require 'thread'
-require File.dirname(__FILE__) + '/../revactor'
 
 class Actor
   # The Actor Scheduler maintains a run queue of actors with outstanding
