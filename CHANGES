@@ -1,5 +1,7 @@
 0.1.3:
 
+* Added the Actorize module for easily using objects as Actors
+
 * Removed case gem usage in Revactor internals
 
 * Add a guaranteed blocking idle state for the Actor scheduler, fixing a bug

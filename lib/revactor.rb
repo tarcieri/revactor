@@ -32,7 +32,7 @@ end
 
 %w{
   actor scheduler mailbox delegator tcp http_client
-  filters/line filters/packet
+  filters/line filters/packet actorize
 }.each do |file|
   require File.dirname(__FILE__) + '/revactor/' + file
 end
