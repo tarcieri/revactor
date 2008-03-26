@@ -32,7 +32,7 @@ module Revactor
 end
 
 %w{
-  actor scheduler mailbox delegator tcp http_client
+  actor scheduler mailbox tcp http_client
   filters/line filters/packet actorize
 }.each do |file|
   require File.dirname(__FILE__) + '/revactor/' + file
@@ -42,6 +42,5 @@ end
 class Actor
   Actor::TCP = Revactor::TCP unless defined? Actor::TCP
   Actor::Filter = Revactor::Filter unless defined? Actor::Filter
-  Actor::Delegator = Revactor::Delegator unless defined? Actor::Delegator
   Actor::HttpClient = Revactor::HttpClient unless defined? Actor::HttpClient
 end
