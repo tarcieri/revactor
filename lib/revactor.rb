@@ -27,12 +27,12 @@ end
 T = Tuple unless defined? T
 
 module Revactor
-  Revactor::VERSION = '0.1.3' unless defined? Revactor::VERSION
+  Revactor::VERSION = '0.1.4' unless defined? Revactor::VERSION
   def self.version() VERSION end
 end
 
 %w{
-  actor scheduler mailbox delegator tcp http_client
+  actor scheduler mailbox tcp http_client
   filters/line filters/packet actorize
 }.each do |file|
   require File.dirname(__FILE__) + '/revactor/' + file
@@ -42,6 +42,5 @@ end
 class Actor
   Actor::TCP = Revactor::TCP unless defined? Actor::TCP
   Actor::Filter = Revactor::Filter unless defined? Actor::Filter
-  Actor::Delegator = Revactor::Delegator unless defined? Actor::Delegator
   Actor::HttpClient = Revactor::HttpClient unless defined? Actor::HttpClient
 end

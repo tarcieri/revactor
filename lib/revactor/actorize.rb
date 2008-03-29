@@ -42,28 +42,35 @@
 #
 module Actorize
   def spawn(*args)
-    Actor.spawn(*args, &method(:_spawn))
+    _actorize Actor.spawn(*args, &method(:new))
   end
   
   def spawn_link(*args)
-    Actor.spawn_link(*args, &method(:_spawn))
+    _actorize Actor.spawn_link(*args, &method(:new))
   end
   
   #######
   private
   #######
   
-  def _spawn(*args)
-    obj = allocate
-    obj.extend InstanceMethods
-    Actor.current.instance_variable_set(:@_class, self)
-    obj.__send__(:initialize, *args)
+  def _actorize(actor)
+    actor.extend InstanceMethods
+    actor.instance_variable_set(:@_class, self)
+    actor
   end
   
   module InstanceMethods
     def method_missing(*args, &block)
       return super unless @_class.respond_to?(:call)
       @_class.call(self, *args, &block)
+    end
+    
+    def remote_class
+      @_class
+    end
+    
+    def inspect
+      "#<#{self.class}(#{remote_class}):0x#{object_id.to_s(16)}>"
     end
   end
 end
