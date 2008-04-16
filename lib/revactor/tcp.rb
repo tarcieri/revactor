@@ -88,7 +88,7 @@ module Revactor
         
           super.instance_eval {
             @active, @controller = options[:active], options[:controller]
-            @filterset = initialize_filter(*options[:filter])
+            @filterset = [*initialize_filter(options[:filter])]
             self
           }
         end
@@ -99,7 +99,7 @@ module Revactor
         
         @active ||= options[:active] || false
         @controller ||= options[:controller] || Actor.current
-        @filterset ||= initialize_filter(*options[:filter])
+        @filterset ||= [*initialize_filter(options[:filter])]
         
         @receiver = @controller
         @read_buffer = Rev::Buffer.new
@@ -237,26 +237,26 @@ module Revactor
       # Filter setup
       #
       
-      # Initialize filter change
-      def initialize_filter(*filterset)
-        return filterset if filterset.empty?
-        
-        filterset.map do |filter|
-          case filter
-          when Array
-            name = filter.shift
-            case name
-            when Class
-              name.new(*filter)
-            when Symbol
-              symbol_to_filter(name).new(*filter)
-            else raise ArgumentError, "unrecognized filter type: #{name.class}"
-            end
+      # Initialize filters
+      def initialize_filter(filter)
+        case filter
+        when NilClass
+          []
+        when Tuple
+          name, *args = filter
+          case name
           when Class
-            filter.new
+            name.new(*args)
           when Symbol
-            symbol_to_filter(filter).new
+            symbol_to_filter(name).new(*args)
+          else raise ArgumentError, "unrecognized filter type: #{name.class}"
           end
+        when Array
+          filter.map { |f| initialize_filter f }
+        when Class
+          filter.new
+        when Symbol
+          symbol_to_filter(filter).new
         end
       end
       
@@ -271,8 +271,8 @@ module Revactor
       
       # Decode data through the filter chain
       def decode(data)
-        @filterset.reduce([data]) do |a, filter|
-          a.reduce([]) do |a2, d|
+        @filterset.inject([data]) do |a, filter|
+          a.inject([]) do |a2, d|
             a2 + filter.decode(d)
           end
         end
@@ -280,7 +280,7 @@ module Revactor
       
       # Encode data through the filter chain
       def encode(message)
-        @filterset.reverse.reduce(message) { |m, filter| filter.encode(*m) }
+        @filterset.reverse.inject(message) { |m, filter| filter.encode(*m) }
       end
       
       #

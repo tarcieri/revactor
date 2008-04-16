@@ -31,6 +31,6 @@ describe Revactor::Filter::Line do
     chunks[2] = msg2.slice(1, msg2.size - 1)
     chunks[3] = msg2.slice(msg2.size, 1) << msg3
         
-    chunks.reduce([]) { |a, chunk| a + @filter.decode(chunk) }.should == %w{foobar baz quux}
+    chunks.inject([]) { |a, chunk| a + @filter.decode(chunk) }.should == %w{foobar baz quux}
   end
 end

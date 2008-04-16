@@ -4,7 +4,7 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../lib/revactor/actor'
+require File.dirname(__FILE__) + '/../lib/revactor'
 
 describe Actor do
   describe "creation" do

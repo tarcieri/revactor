@@ -48,7 +48,7 @@ describe Revactor::Filter::Packet do
     chunks[2] = packet2.slice(1, packet2.size - 1)
     chunks[3] = packet2.slice(packet2.size, 1) << packet3
     
-    chunks.reduce([]) { |a, chunk| a + filter.decode(chunk) }.should == [msg1, msg2, msg3]
+    chunks.inject([]) { |a, chunk| a + filter.decode(chunk) }.should == [msg1, msg2, msg3]
   end
 
   it "raises an exception for overlength frames" do

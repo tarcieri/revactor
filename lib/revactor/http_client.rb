@@ -235,7 +235,9 @@ module Revactor
       @chunked_encoding = response_header.chunked_encoding?
       
       # Convert header fields hash from LIKE_THIS to like-this
-      @headers = response_header.reduce({}) { |h, (k, v)| h[k.split('_').map(&:downcase).join('-')] = v; h }
+      @headers = response_header.inject({}) do |h, (k, v)| 
+        h[k.split('_').map(&:downcase).join('-')] = v; h
+      end
       
       # Extract Transfer-Encoding if available
       @transfer_encoding = @headers.delete('transfer-encoding')

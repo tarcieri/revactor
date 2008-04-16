@@ -49,7 +49,7 @@ module Revactor
 
       # Send a packet with a specified size prefix
       def encode(*data)
-        data.reduce('') do |s, d|
+        data.inject('') do |s, d|
           raise ArgumentError, 'packet too long for prefix length' if d.size >= 256 ** @prefix_size
           s << [d.size].pack(@prefix_size == 2 ? 'n' : 'N') << d
         end

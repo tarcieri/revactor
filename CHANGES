@@ -1,3 +1,7 @@
+0.1.5:
+
+* Change Revactor::Filter setup to express initialize args as Tuples
+
 0.1.4:
 
 * Fix bungled 0.1.3 release :(

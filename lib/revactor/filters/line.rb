@@ -45,7 +45,7 @@ module Revactor
       
       # Encode lines using the current delimiter
       def encode(*data)
-        data.reduce("") { |str, d| str << d << @delimiter }
+        data.inject("") { |str, d| str << d << @delimiter }
       end
     end
   end

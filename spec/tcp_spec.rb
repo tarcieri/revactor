@@ -4,7 +4,7 @@
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../lib/revactor/tcp'
+require File.dirname(__FILE__) + '/../lib/revactor'
 
 TEST_HOST = '127.0.0.1'
 
