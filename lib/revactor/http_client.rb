@@ -51,7 +51,7 @@ module Revactor
       end
       
       # Perform an HTTP request for the given method and return a response object
-      def request(method, uri, options = {}, &block)
+      def request(method, uri, options = {})
         follow_redirects = options.has_key?(:follow_redirects) ? options[:follow_redirects] : true
         uri = URI.parse(uri)
         
@@ -60,17 +60,29 @@ module Revactor
           request_options = uri.is_a?(URI::HTTPS) ? options.merge(:ssl => true) : options
         
           client = connect(uri.host, uri.port)
-          response = client.request(method, uri.request_uri, request_options, &block)
+          response = client.request(method, uri.request_uri, request_options)
           
-          return response unless follow_redirects and REDIRECT_STATUSES.include? response.status
+          # Request complete
+          unless follow_redirects and REDIRECT_STATUSES.include? response.status
+            return response unless block_given?
+            
+            begin
+              yield response
+            ensure
+              response.close
+            end
+            
+            return
+          end
+          
           response.close
           
           location = response.headers['location']
           raise "redirect with no location header: #{uri}" if location.nil?
           
-          # Append host to relative URLs
-          if location[0] == '/'
-            location = "#{uri.scheme}://#{uri.host}" << location
+          # Convert path-based redirects to URIs
+          unless /^[a-z]+:\/\// === location
+            location = "#{uri.scheme}://#{uri.host}" << File.expand_path(location, uri.path)
           end
           
           uri = URI.parse(location)
