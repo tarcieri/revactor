@@ -1,3 +1,10 @@
+# An Actor ring example
+#
+# Here we construct a ring of interconnected Actors which each know the
+# next Actor to send messages to.  Any message sent from the parent Actor
+# is delivered around the ring and back to the parent.
+
+require 'rubygems'
 require 'revactor'
 
 NCHILDREN = 5
