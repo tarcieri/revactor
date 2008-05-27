@@ -27,7 +27,7 @@ module Revactor
     class << self
       def connect(host, port = 80)        
         client = super
-        client.instance_eval { @receiver = Actor.current }
+        client.instance_variable_set :@receiver, Actor.current
         client.attach Rev::Loop.default
       
         Actor.receive do |filter|
@@ -45,6 +45,7 @@ module Revactor
           end
 
           filter.after(TCP::CONNECT_TIMEOUT) do
+            client.close unless client.closed?
             raise TCP::ConnectError, "connection timed out"
           end
         end

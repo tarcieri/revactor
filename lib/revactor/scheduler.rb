@@ -58,7 +58,7 @@ class Actor
             handle_exit(actor) if actor.dead?
           rescue FiberError
             # Handle Actors whose Fibers died after being scheduled
-            actor.instance_eval { @dead = true }
+            actor.instance_variable_set :@dead, true
             handle_exit(actor)
           rescue => ex
             handle_exit(actor, ex)

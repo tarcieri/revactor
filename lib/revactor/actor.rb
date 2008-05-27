@@ -141,11 +141,11 @@ class Actor
     def _spawn(*args, &block)
       fiber = Fiber.new do
         block.call(*args)
-        current.instance_eval { @dead = true }
+        current.instance_variable_set :@dead, true
       end
       
       actor = new(fiber)
-      fiber.instance_eval { @_actor = actor }
+      fiber.instance_variable_set :@_actor, actor
     end
   end
   
