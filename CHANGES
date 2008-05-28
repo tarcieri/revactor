@@ -1,5 +1,11 @@
 0.1.5:
 
+* Add Revactor::HttpFetcher, a concurrent HTTP fetcher using 
+  Revactor::HttpClient
+
+* Allow Revactor::HttpClient to take a block for requests, and handle
+  closing sockets automatically when the block has been evaluated
+
 * Change Revactor::Filter setup to express initialize args as Tuples
 
 0.1.4:
