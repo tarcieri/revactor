@@ -45,7 +45,7 @@ module Revactor
           end
 
           filter.after(TCP::CONNECT_TIMEOUT) do
-            client.close unless client.closed?
+            client.close if client and not client.closed?
             raise TCP::ConnectError, "connection timed out"
           end
         end
