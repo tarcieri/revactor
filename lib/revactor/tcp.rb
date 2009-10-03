@@ -102,7 +102,7 @@ module Revactor
         @filterset ||= [*initialize_filter(options[:filter])]
         
         @receiver = @controller
-        @read_buffer = Rev::Buffer.new
+        @read_buffer = IO::Buffer.new
       end
       
       def inspect

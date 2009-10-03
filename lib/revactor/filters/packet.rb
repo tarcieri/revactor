@@ -23,7 +23,7 @@ module Revactor
         @data_size = 0
         
         @mode = :prefix
-        @buffer = Rev::Buffer.new
+        @buffer = IO::Buffer.new
       end
 
       # Callback for processing incoming frames
