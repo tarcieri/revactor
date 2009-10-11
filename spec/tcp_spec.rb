@@ -52,6 +52,29 @@ describe Revactor::TCP do
     s1.close
   end
 
+  it "times out on read" do
+    s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
+    s2 = @server.accept
+
+    proc {
+      s1.read(6, :timeout => 0.1)
+    }.should raise_error(Revactor::TCP::ReadError)
+
+    s1.close
+  end
+
+  it "times out on write" do
+    s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
+    s2 = @server.accept
+
+    # typically needs to write several thousand kilobytes before it blocks
+    buf = ' ' * 16384
+    proc {
+      loop { s1.write(buf, :timeout => 0.1) }
+    }.should raise_error(Revactor::TCP::WriteError)
+    s1.close
+  end
+
   it "writes data" do
     s1 = Revactor::TCP.connect(TEST_HOST, RANDOM_PORT)
     s2 = @server.accept

@@ -12,6 +12,12 @@ module Revactor
     # Number of seconds to wait for a connection
     CONNECT_TIMEOUT = 10
 
+    # Raised when a read from a client or server fails
+    class ReadError < StandardError; end
+
+    # Raised when a write to a client or server fails
+    class WriteError < StandardError; end
+
     # Raised when a connection to a remote server fails
     class ConnectError < StandardError; end
     
@@ -152,7 +158,7 @@ module Revactor
       # Read data from the socket synchronously.  If a length is specified
       # then the call blocks until the given length has been read.  Otherwise
       # the call blocks until it receives any data.
-      def read(length = nil)
+      def read(length = nil, options = {})
         # Only one synchronous call allowed at a time
         raise "already being called synchronously" unless @receiver == @controller
         
@@ -195,12 +201,16 @@ module Revactor
               
               raise EOFError, "connection closed"
             end
+
+            if timeout = options[:timeout]
+              filter.after(timeout) { raise ReadError, "read timed out" }
+            end
           end
         end
       end
       
       # Write data to the socket.  The call blocks until all data has been written.
-      def write(data)
+      def write(data, options = {})
         # Only one synchronous call allowed at a time
         raise "already being called synchronously" unless @receiver == @controller
         
@@ -223,6 +233,10 @@ module Revactor
           filter.when(T[:tcp_closed, self]) do
             @active = false
             raise EOFError, "connection closed"
+          end
+
+          if timeout = options[:timeout]
+            filter.after(timeout) { raise WriteError, "write timed out" }
           end
         end
       end
