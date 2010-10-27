@@ -2,9 +2,9 @@ Revactor
 ========
 
 Revactor is an Actor model implementation for Ruby 1.9 built on top of the
-Rev high performance event library. Revactor is well suited for developing
-I/O-heavy asynchronous applications that handle large numbers of concurrent
-network connections. Its design is largely modeled off of Erlang.
+[Rev](http://github.com/tarcieri/rev) event library. Revactor is well suited
+for developing I/O-heavy asynchronous applications that handle large numbers
+of concurrent network connections. Its design is largely modeled off of Erlang.
 
 You can load Revactor in your Ruby 1.9 application with:
 
