@@ -15,9 +15,9 @@ available on the Revactor web site:
 
 [http://revactor.org/philosophy](http://revactor.org/philosophy)
 
-More information about Rev is available on Rubyforge:
+More information about Rev is available on Github:
 
-[http://rev.rubyforge.org/rdoc](http://rev.rubyforge.org/rdoc)
+[http://github.com/tarcieri/rev](http://github.com/tarcieri/rev)
 
 Anatomy
 -------
