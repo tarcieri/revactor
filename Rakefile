@@ -1,48 +1,45 @@
+require 'rubygems'
 require 'rake'
-require 'rake/rdoctask'
-require 'rake/gempackagetask'
-load 'revactor.gemspec'
 
-# Default Rake task
-task :default => :rdoc
-
-# RDoc
-Rake::RDocTask.new(:rdoc) do |task|
-  task.rdoc_dir = 'doc'
-  task.title    = 'Revactor'
-  task.options = %w(--title Revactor --main README --line-numbers)
-  task.rdoc_files.include('bin/**/*.rb')
-  task.rdoc_files.include('lib/**/*.rb')
-  task.rdoc_files.include('README')
-end
-
-# Gem
-Rake::GemPackageTask.new(GEMSPEC) do |pkg|
-  pkg.need_tar = true
-end
-
-# RSpec
 begin
-require 'spec/rake/spectask'
-
-SPECS = FileList['spec/**/*_spec.rb']
-
-Spec::Rake::SpecTask.new(:spec) do |task|
-  task.spec_files = SPECS
-end
-
-namespace :spec do
-  Spec::Rake::SpecTask.new(:print) do |task|
-    task.spec_files = SPECS
-    task.spec_opts="-f s".split
+  require 'jeweler'
+  Jeweler::Tasks.new do |gem|
+    gem.name = "revactor"
+    gem.summary = "Network programming for a concurrent world"
+    gem.description = "Revactor wraps up Fibers as Erlang-like actors, allowing you to build concurrent network applications that handle large numbers of connections without the 'callback spaghetti' of event frameworks"
+    gem.email = "tony@medioh.com"
+    gem.homepage = "http://github.com/tarcieri/revactor"
+    gem.authors = ["Tony Arcieri"]
+    gem.add_dependency "cool.io", "~> 0.9.0"
+    gem.add_development_dependency "rspec", "~> 2.0.0"
+    # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
-
-  Spec::Rake::SpecTask.new(:rcov) do |task|
-    task.spec_files = SPECS
-    task.rcov = true
-    task.rcov_opts = ['--exclude', 'spec']
-  end
-end
-
+  Jeweler::GemcutterTasks.new
 rescue LoadError
+  puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
+end
+
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec) do |spec|
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.rspec_opts = %w[-fs -c -b]
+end
+
+RSpec::Core::RakeTask.new(:rcov) do |spec|
+  spec.pattern = 'spec/**/*_spec.rb'
+  spec.rcov = true
+  spec.rspec_opts = %w[-fs -c -b]
+end
+
+task :spec => :check_dependencies
+task :default => :spec
+
+require 'rake/rdoctask'
+Rake::RDocTask.new do |rdoc|
+  version = File.exist?('VERSION') ? File.read('VERSION') : ""
+
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title = "revactor #{version}"
+  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
