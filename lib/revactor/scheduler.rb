@@ -1,5 +1,5 @@
 #--
-# Copyright (C)2007 Tony Arcieri
+# Copyright (C)2007-10 Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
@@ -18,7 +18,7 @@ class Actor
       @queue = []
       @running = false
       @mailbox = Mailbox.new
-      @mailbox.attach Rev::Loop.default
+      @mailbox.attach Coolio::Loop.default
     end
 
     # Schedule an Actor to be executed, and run the scheduler if it isn't
@@ -49,7 +49,7 @@ class Actor
       return if @running
     
       @running = true
-      default_loop = Rev::Loop.default
+      default_loop = Coolio::Loop.default
     
       while true
         while actor = @queue.shift
@@ -94,7 +94,7 @@ class Actor
     # The Scheduler Mailbox allows messages to be safely delivered across
     # threads.  If a thread is sleeping sending it a message will wake
     # it up.
-    class Mailbox < Rev::AsyncWatcher
+    class Mailbox < Coolio::AsyncWatcher
       def initialize
         super
         

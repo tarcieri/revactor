@@ -1,5 +1,5 @@
 #--
-# Copyright (C)2007 Tony Arcieri
+# Copyright (C)2007-10 Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
@@ -11,7 +11,7 @@ module Revactor
   class HttpClientError < StandardError; end
   
   # A high performance HTTP client which wraps the asynchronous client in Rev
-  class HttpClient < Rev::HttpClient
+  class HttpClient < Coolio::HttpClient
     # Default timeout for HTTP requests (until the response header is received)
     REQUEST_TIMEOUT = 60
     
@@ -28,7 +28,7 @@ module Revactor
       def connect(host, port = 80)        
         client = super
         client.instance_variable_set :@receiver, Actor.current
-        client.attach Rev::Loop.default
+        client.attach Coolio::Loop.default
       
         Actor.receive do |filter|
           filter.when(T[Object, client]) do |message, _|
@@ -92,7 +92,7 @@ module Revactor
         raise HttpClientError, "exceeded maximum of #{MAX_REDIRECTS} redirects"
       end
       
-      Rev::HttpClient::ALLOWED_METHODS.each do |meth|
+      Coolio::HttpClient::ALLOWED_METHODS.each do |meth|
         module_eval <<-EOD
           def #{meth}(uri, options = {}, &block)
             request(:#{meth}, uri, options, &block)
@@ -185,7 +185,7 @@ module Revactor
     
     def ssl_handshake
       require 'rev/ssl'
-      extend Rev::SSL
+      extend Coolio::SSL
       ssl_client_start
     end
     

@@ -1,12 +1,8 @@
 #--
-# Copyright (C)2007 Tony Arcieri
+# Copyright (C)2007-10 Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
-
-# Use buffering from Rev
-require 'rubygems'
-require 'rev'
 
 module Revactor
   module Filter

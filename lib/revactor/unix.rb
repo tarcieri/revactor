@@ -1,5 +1,5 @@
 #--
-# Copyright (C)2009 Eric Wong
+# Copyright (C)2009-10 Eric Wong, Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
@@ -27,13 +27,13 @@ module Revactor
       rescue SystemCallError
         raise ConnectError, "connection refused"
       end
-      socket.attach Rev::Loop.default
+      socket.attach Coolio::Loop.default
     end
 
     # Listen on the specified path.  Accepts the following options:
     #
     #   :active - Default active setting for new connections.  See the
-    #             documentation Rev::UNIX::Socket#active= for more info
+    #             documentation Coolio::UNIX::Socket#active= for more info
     #
     #   :controller - The controlling actor, default Actor.current
     #
@@ -43,12 +43,12 @@ module Revactor
     #             See the "Filters" section in the README for more information
     #
     def self.listen(path, options = {})
-      Listener.new(path, options).attach(Rev::Loop.default).disable
+      Listener.new(path, options).attach(Coolio::Loop.default).disable
     end
 
     # UNIX socket class, returned by Revactor::UNIX.connect and
     # Revactor::UNIX::Listener#accept
-    class Socket < Rev::UNIXSocket
+    class Socket < Coolio::UNIXSocket
       attr_reader :controller
 
       class << self
@@ -271,7 +271,7 @@ module Revactor
       end
 
       #
-      # Rev::UNIXSocket callback
+      # Coolio::UNIXSocket callback
       #
 
       def on_connect
@@ -309,13 +309,13 @@ module Revactor
     end
 
     # UNIX Listener returned from Revactor::UNIX.listen
-    class Listener < Rev::UNIXListener
+    class Listener < Coolio::UNIXListener
       attr_reader :controller
 
       # Listen on the specified path.  Accepts the following options:
       #
       #   :active - Default active setting for new connections.  See the
-      #             documentation Rev::UNIX::Socket#active= for more info
+      #             documentation Coolio::UNIX::Socket#active= for more info
       #
       #   :controller - The controlling actor, default Actor.current
       #
@@ -381,7 +381,7 @@ module Revactor
       #########
 
       #
-      # Rev::UNIXListener callbacks
+      # Coolio::UNIXListener callbacks
       #
 
       def on_connection(socket)

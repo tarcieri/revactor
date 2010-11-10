@@ -1,5 +1,5 @@
 #--
-# Copyright (C)2007 Tony Arcieri
+# Copyright (C)2007-10 Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
@@ -94,7 +94,7 @@ class Actor
     #######
   
     # Timeout class, used to implement receive timeouts
-    class Timer < Rev::TimerWatcher
+    class Timer < Coolio::TimerWatcher
       def initialize(seconds, actor)
         @actor = actor
         super(seconds)
@@ -131,7 +131,7 @@ class Actor
       
         # Don't explicitly require an action to be specified
         @mailbox.timeout_action = action || proc {}
-        @mailbox.timer = Timer.new(seconds, Actor.current).attach(Rev::Loop.default)
+        @mailbox.timer = Timer.new(seconds, Actor.current).attach(Coolio::Loop.default)
       end
 
       # Match a message using the filter

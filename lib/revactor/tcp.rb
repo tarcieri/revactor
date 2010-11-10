@@ -1,5 +1,5 @@
 #--
-# Copyright (C)2007 Tony Arcieri
+# Copyright (C)2007-10 Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
@@ -32,7 +32,7 @@ module Revactor
     #
     def self.connect(host, port, options = {})
       socket = Socket.connect host, port, options
-      socket.attach Rev::Loop.default
+      socket.attach Coolio::Loop.default
 
       Actor.receive do |filter|
         filter.when(T[Object, socket]) do |message, _|
@@ -56,7 +56,7 @@ module Revactor
     # Listen on the specified address and port.  Accepts the following options:
     #
     #   :active - Default active setting for new connections.  See the
-    #             documentation Rev::TCP::Socket#active= for more info
+    #             documentation Coolio::TCP::Socket#active= for more info
     #
     #   :controller - The controlling actor, default Actor.current
     #
@@ -66,12 +66,12 @@ module Revactor
     #             See the "Filters" section in the README for more information
     #
     def self.listen(addr, port, options = {})
-      Listener.new(addr, port, options).attach(Rev::Loop.default).disable
+      Listener.new(addr, port, options).attach(Coolio::Loop.default).disable
     end
 
     # TCP socket class, returned by Revactor::TCP.connect and 
     # Revactor::TCP::Listener#accept
-    class Socket < Rev::TCPSocket
+    class Socket < Coolio::TCPSocket
       attr_reader :controller
 
       class << self
@@ -298,7 +298,7 @@ module Revactor
       end
       
       #
-      # Rev::TCPSocket callback
+      # Coolio::TCPSocket callback
       #
       
       def on_connect
@@ -340,13 +340,13 @@ module Revactor
     end
 
     # TCP Listener returned from Revactor::TCP.listen
-    class Listener < Rev::TCPListener
+    class Listener < Coolio::TCPListener
       attr_reader :controller
    
       # Listen on the specified address and port.  Accepts the following options:
       #
       #   :active - Default active setting for new connections.  See the 
-      #             documentation Rev::TCP::Socket#active= for more info
+      #             documentation Coolio::TCP::Socket#active= for more info
       #
       #   :controller - The controlling actor, default Actor.current
       #   
@@ -411,7 +411,7 @@ module Revactor
       #########
       
       #
-      # Rev::TCPListener callbacks
+      # Coolio::TCPListener callbacks
       #
       
       def on_connection(socket)

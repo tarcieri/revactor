@@ -4,7 +4,7 @@
 # See file LICENSE for details
 #++
 
-require 'rev'
+require 'cool.io'
 require 'case'
 
 require 'revactor/actor'
