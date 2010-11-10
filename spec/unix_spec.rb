@@ -1,10 +1,10 @@
 #--
-# Copyright (C)2009 Eric Wong
+# Copyright (C)2009-10 Eric Wong, Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../lib/revactor'
+require File.expand_path('../spec_helper', __FILE__)
 require 'tempfile'
 
 describe Revactor::UNIX do

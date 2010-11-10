@@ -1,10 +1,10 @@
 #--
-# Copyright (C)2007 Tony Arcieri
+# Copyright (C)2007-10 Tony Arcieri
 # You can redistribute this under the terms of the Ruby license
 # See file LICENSE for details
 #++
 
-require File.dirname(__FILE__) + '/../lib/revactor'
+require File.expand_path('../spec_helper', __FILE__)
 
 describe Actor do
   describe "creation" do
