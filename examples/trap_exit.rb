@@ -7,7 +7,7 @@
 # When the child raises the unhandled exception, the exit message
 # is delivered back to the parent.
 
-require 'rubygems'
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'revactor'
 
 actor = Actor.spawn_link do

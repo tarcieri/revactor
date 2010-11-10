@@ -7,9 +7,10 @@
 # The listener spawns new client managers for each incoming connection
 #
 
-require File.dirname(__FILE__) + '/../lib/revactor'
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require 'revactor'
 
-HOST = 'localhost'
+HOST = '0.0.0.0'
 PORT = 4321
 
 # Open a listen socket.  All traffic on new connections will be run through

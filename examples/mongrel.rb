@@ -1,6 +1,8 @@
 #!/usr/bin/env ruby
 
-require File.dirname(__FILE__) + '/../lib/revactor/mongrel'
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require 'revactor'
+require 'revactor/mongrel'
 
 ADDR = '127.0.0.1'
 PORT = 8080

@@ -2,9 +2,10 @@
 # This implementation creates a new actor for each
 # incoming connection.
 
-require File.dirname(__FILE__) + '/../lib/revactor'
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+require 'revactor'
 
-HOST = 'localhost'
+HOST = '0.0.0.0'
 PORT = 4321
 
 # Create a new listener socket on the given host and port

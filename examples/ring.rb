@@ -4,7 +4,7 @@
 # next Actor to send messages to.  Any message sent from the parent Actor
 # is delivered around the ring and back to the parent.
 
-require 'rubygems'
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
 require 'revactor'
 
 NCHILDREN = 5

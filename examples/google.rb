@@ -1,7 +1,9 @@
 #!/usr/bin/env ruby
 
+$LOAD_PATH.unshift File.expand_path('../../lib', __FILE__)
+
+require 'revactor'
 require 'cgi'
-require File.dirname(__FILE__) + '/../lib/revactor'
 
 term = ARGV[0] || 'foobar'
 sock = Revactor::TCP.connect("www.google.com", 80)
