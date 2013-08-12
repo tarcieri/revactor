@@ -1,6 +1,9 @@
 Revactor
 ========
 
+### NOTE: Revactor is defunct and broken. It's only being kept available for historical interest.
+### Please check out [Celluloid](http://celluloid.io), the new hotness for Ruby actors instead!
+
 Revactor is an Actor model implementation for Ruby 1.9 built on top of the
 [Rev](http://github.com/tarcieri/rev) event library. Revactor is well suited
 for developing I/O-heavy asynchronous applications that handle large numbers
@@ -13,11 +16,7 @@ You can load Revactor in your Ruby 1.9 application with:
 If you'd like to learn more about the Actor model, more information is
 available on the Revactor web site:
 
-[http://revactor.org/philosophy](http://revactor.org/philosophy)
-
-More information about Rev is available on Github:
-
-[http://github.com/tarcieri/rev](http://github.com/tarcieri/rev)
+[http://revactor.github.io/philosophy](http://revactor.github.io/philosophy)
 
 Anatomy
 -------
